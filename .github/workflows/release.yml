@@ -73,6 +73,5 @@ jobs:
         with:
           files: |
             ${{ env.zipFile }}
-            ${{ env.unityPackage }}
             ${{ env.packagePath }}/package.json
           tag_name: ${{ env.version }}
