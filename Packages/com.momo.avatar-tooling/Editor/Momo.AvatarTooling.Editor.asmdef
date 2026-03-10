@@ -1,0 +1,10 @@
+{
+  "name": "Momo.AvatarTooling.Editor",
+  "rootNamespace": "MomoVRChatTools",
+  "references": [
+    "Momo.AvatarTooling"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}
