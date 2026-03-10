@@ -1,0 +1,13 @@
+{
+  "name": "com.momo.avatar-tooling",
+  "displayName": "Momo Avatar Tooling",
+  "version": "0.1.0",
+  "unity": "2022.3",
+  "description": "Avatar tooling for VRChat.",
+  "author": {
+    "name": "Momo"
+  },
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "2.0.2"
+  }
+}
