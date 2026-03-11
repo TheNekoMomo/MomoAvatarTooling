@@ -3,7 +3,7 @@
 There are two ways to add this package to **VRChat Creator Companion (VCC)**:
 
 **Method One**
-Click this [LINK](https://thenekomomo.github.io/MomoAvatarTooling/) and Click the Blue button *Add to VCC*
+Click this [LINK](https://thenekomomo.github.io/MomoAvatarTooling/) and Click the Blue button **Add to VCC**
 
 **Method Two**
 In **VCC**:
