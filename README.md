@@ -1,14 +1,16 @@
 # Momo Avatar Tooling
 
-Add this repository to **VRChat Creator Companion (VCC)** to install the package:
+There are two ways to add this package to **VRChat Creator Companion (VCC)**:
 
-```
-https://thenekomomo.github.io/MomoAvatarTooling/
-```
+**Method One**
+Click this [LINK](https://thenekomomo.github.io/MomoAvatarTooling/) and Click the Blue button *Add to VCC*
 
+**Method Two**
 In **VCC**:
-
 1. Open **Settings**
 2. Go to **Packages**
 3. Click **Add Repository**
 4. Paste the URL above
+```
+https://TheNekoMomo.github.io/MomoAvatarTooling/index.json
+```
