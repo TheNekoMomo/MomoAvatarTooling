@@ -1,7 +1,7 @@
 using UnityEngine;
 using VRC.SDKBase.Editor.BuildPipeline;
 
-namespace MomoVRChatTools
+namespace MomoVRChatTools.Editor
 {
     internal class VRCFuryGestureHelperPreprocessor : IVRCSDKPreprocessAvatarCallback
     {

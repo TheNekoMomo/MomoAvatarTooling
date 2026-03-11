@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using VRC.SDK3.Avatars.Components;
 
-namespace MomoVRChatTools
+namespace MomoVRChatTools.Editor
 {
     internal static class VRCFuryGestureHelperUtility
     {

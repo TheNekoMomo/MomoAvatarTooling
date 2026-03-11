@@ -4,10 +4,10 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using VRC.SDK3.Avatars.Components;
 
-namespace MomoVRChatTools
+namespace MomoVRChatTools.Editor
 {
     [CustomEditor(typeof(VRCFuryGestureHelper))]
-    public class VRCFuryGestureHelperEditor : Editor
+    public class VRCFuryGestureHelperEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {

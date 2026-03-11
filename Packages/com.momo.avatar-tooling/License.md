@@ -1,11 +1,40 @@
-# VRCHAT INC.
-### VRCHAT DISTRO LICENSE FILE
-Version: February 24, 2022
+Momo Avatar Tooling License
+Copyright (c) 2026 Momo
 
-**SUMMARY OF TERMS:** Any materials subject to this Distro Asset License may be distributed by you, with or without modifications, on a non-commercial basis (i.e., at no charge), in accordance with the full terms of the Materials License Agreement.
+Permission is granted to use this software for personal and commercial purposes,
+including the creation of VRChat avatars or other projects that depend on this tool,
+subject to the following conditions:
 
-This Distro License File is a "License File" as defined in the VRChat Materials License Agreement, found at https://hello.vrchat.com/legal/sdk (or any successor link designated by VRChat) (as may be revised from time to time, the "Materials License Agreement").
+1. Redistribution Restriction
+This software may NOT be redistributed as part of another package, repository,
+asset bundle, or downloadable project.
 
-This Distro License File applies to all the files in the Folder containing this Distro License File and those in all Child Folders within that Folder (except with respect to files in any Child Folder that contains a different License File) (such files, other than this Distro License File, the "Covered Files"). All capitalized terms used but not otherwise defined in this Distro License File have the meanings provided in the Materials License Agreement.
+Projects that use this software must instead depend on the official distribution
+repository:
 
-This Distro License File only provides a summary of the terms applicable to the Covered Files. To understand your rights and obligations and the full set of terms that apply to use of the Covered Files, please see the relevant sections of the Materials License Agreement, including terms applicable to Distro Materials. 
+https://thenekomomo.github.io/MomoAvatarTooling/
+
+2. Source Availability
+If you modify this software and distribute those modifications,
+the modified source code must be made publicly available under the same license.
+
+3. Attribution
+This license and copyright notice must be included in any redistribution of the
+source code or derivative works.
+
+4. Dependency Usage
+Projects may depend on this tool without restriction, including commercial
+projects, as long as the software itself is not redistributed.
+
+5. No Warranty
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Official Distribution:
+https://thenekomomo.github.io/MomoAvatarTooling/

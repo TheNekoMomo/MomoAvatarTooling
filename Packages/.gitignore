@@ -1,5 +1,6 @@
 # Ignore everything in the Packages folder
 *
+# Except for the com.momo.avatar-tooling package
 !com.momo.avatar-tooling/
 !com.momo.avatar-tooling/**
 !.gitignore
