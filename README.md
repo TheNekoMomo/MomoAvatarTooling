@@ -12,7 +12,7 @@ In **VCC**:
 1. Open **Settings**
 2. Go to **Packages**
 3. Click **Add Repository**
-4. Paste the URL above
+4. Paste the URL below
 ```
 https://TheNekoMomo.github.io/MomoAvatarTooling/index.json
 ```
