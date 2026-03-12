@@ -7,21 +7,49 @@ namespace MomoVRChatTools.Editor
 {
     public class MenuGraphView : GraphView
     {
-        private const string styleSheetPath = "Packages/com.momo.avatar-tooling/Editor/MenuGraph/USS/MenuGraphEditor.uss";
+        private readonly EditorWindow window;
 
-        public MenuGraphView()
+        public MenuGraphView(EditorWindow window)
         {
-            StyleSheet style = AssetDatabase.LoadAssetAtPath<StyleSheet>(styleSheetPath);
-            styleSheets.Add(style);
+            this.window = window;
 
-            GridBackground background = new GridBackground();
-            background.name = "Grid";
-            Add(background);
+            style.flexGrow = 1;
+            this.StretchToParentSize();
 
+            AddBackground();
+            AddGraphManipulators();
+
+            nodeCreationRequest = CreateNewMenuNode;
+        }
+
+        private void AddGraphManipulators()
+        {
             this.AddManipulator(new ContentDragger());
             this.AddManipulator(new SelectionDragger());
             this.AddManipulator(new RectangleSelector());
             this.AddManipulator(new ClickSelector());
+        }
+
+        private void AddBackground()
+        {
+            GridBackground background = new GridBackground();
+            background.StretchToParentSize();
+            background.name = "Grid";
+            Add(background);
+            background.SendToBack();
+        }
+
+        private void CreateNewMenuNode(NodeCreationContext context)
+        {
+            Vector2 mousePosition = context.screenMousePosition - window.position.position;
+            Vector2 graphMousePosition = contentViewContainer.WorldToLocal(mousePosition);
+
+            Node node = new Node();
+            node.title = "Menu Node";
+
+            node.SetPosition(new Rect(graphMousePosition, new Vector2(200, 200)));
+
+            AddElement(node);
         }
     }
 }

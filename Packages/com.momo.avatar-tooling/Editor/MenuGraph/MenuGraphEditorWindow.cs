@@ -1,62 +1,70 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using VRC.SDK3.Avatars.Components;
 
 namespace MomoVRChatTools.Editor
 {
     public class MenuGraphEditorWindow : EditorWindow
     {
-        private static VRCAvatarDescriptor selectedAvatar;
+        [SerializeField] private VisualTreeAsset uxmlAsset;
 
+        private MenuGraph currentMenuGraph;
         private MenuGraphView graphView;
 
-        [MenuItem("Tools/Momo Avatar Toolkit/Avatar Menu Graph")]
-        private static void OpenWindow()
+        public static void Open(MenuGraph target)
         {
-            MenuGraphEditorWindow window = GetWindow<MenuGraphEditorWindow>("Avatar Menu Graph", true, typeof(SceneView));
-            window.minSize = new Vector2(900, 500);
-        }
-
-        private void CreateGUI()
-        {
-            // Clare the Window
-            rootVisualElement.Clear();
-
-            Toolbar toolbar = new Toolbar();
-
-            var avatarField = new ObjectField("Avatar Descriptor")
+            MenuGraphEditorWindow[] windows = Resources.FindObjectsOfTypeAll<MenuGraphEditorWindow>();
+            for (int i = 0; i < windows.Length; i++)
             {
-                objectType = typeof(VRCAvatarDescriptor),
-                value = selectedAvatar,
-                allowSceneObjects = true
-            };
-            avatarField.RegisterValueChangedCallback(OnAvatarChanged);
-            toolbar.Add(avatarField);
+                if (windows[i].currentMenuGraph == target)
+                {
+                    windows[i].Focus();
+                    return;
+                }
+            }
 
-            Button scanButton = new Button(ScanSelectedAvatar) { text = "Scan Avatar" };
-            toolbar.Add(scanButton);
-
-            Button createButton = new Button() { text = "Create Menus" };
-            toolbar.Add(createButton);
-
-            rootVisualElement.Add(toolbar);
-
-            graphView = new MenuGraphView();
-            rootVisualElement.Add(graphView);
+            MenuGraphEditorWindow window = CreateWindow<MenuGraphEditorWindow>(typeof(MenuGraphEditorWindow), typeof(SceneView));
+            window.titleContent = new GUIContent($"{target.name}", EditorGUIUtility.ObjectContent(null, typeof(MenuGraph)).image);
+            window.load(target);
         }
 
-        private void OnAvatarChanged(ChangeEvent<UnityEngine.Object> evt)
+        private void load(MenuGraph target)
         {
-            selectedAvatar = evt.newValue as VRCAvatarDescriptor;
+            currentMenuGraph = target;
+
+            uxmlAsset.CloneTree(rootVisualElement);
+
+            AssignToolBarButtons();
+            AddGraph();
         }
 
-        private void ScanSelectedAvatar()
+        private void AssignToolBarButtons()
         {
-            if (selectedAvatar == null) return;
+            Toolbar toolbar = rootVisualElement.Q<Toolbar>();
+            Button scanAvatar = toolbar.Q<Button>("ScanAvatar");
+            scanAvatar.clicked += ScanAvatar;
+
+            Button updateAvatar = toolbar.Q<Button>("UpdateAvatar");
+            updateAvatar.clicked += UpdateAvatar;
+        }
+        private void ScanAvatar()
+        {
+            Debug.Log($"Scaning {currentMenuGraph.name} Avatar..");
+        }
+        private void UpdateAvatar()
+        {
+            Debug.Log($"Updating {currentMenuGraph.name} Avatar..");
+        }
+
+        private void AddGraph()
+        {
+            VisualElement mainArea = rootVisualElement.Q("MainArea");
+            VisualElement GraphArea = mainArea.Q("GraphRoot");
+
+            graphView = new MenuGraphView(this);
+            GraphArea.Add(graphView);
         }
     }
 }

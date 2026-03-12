@@ -1,0 +1,12 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Packages/com.momo.avatar-tooling/Editor/MenuGraph/MenuGraphEditorWindow.uss?fileID=7433441132597879392&amp;guid=6071a856c93d707458935f4cb23f6060&amp;type=3#MenuGraphEditorWindow" />
+    <uie:Toolbar style="height: 23px; padding-top: 0; padding-right: 5px; padding-bottom: 0; padding-left: 5px; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0;">
+        <uie:ToolbarButton text="Scan Selected Avatar" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ScanAvatar" style="-unity-text-align: middle-left;" />
+        <uie:ToolbarSpacer style="width: 9px; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;" />
+        <uie:ToolbarButton text="Update Selected Avatar" parse-escape-sequences="true" display-tooltip-when-elided="true" name="UpdateAvatar" style="-unity-text-align: middle-left;" />
+    </uie:Toolbar>
+    <ui:VisualElement name="MainArea" style="flex-grow: 1; align-items: stretch; justify-content: center; align-self: auto; display: flex; visibility: visible; overflow: visible; position: relative; left: auto; flex-basis: auto; flex-shrink: 1; flex-direction: row; height: auto; width: auto; max-width: 10000%; max-height: 10000%; min-width: 50%; min-height: 50%;">
+        <ui:VisualElement name="GraphRoot" style="flex-grow: 1; background-color: rgb(86, 164, 110); width: 50%; align-items: flex-start; justify-content: flex-start; flex-direction: column; align-self: auto; -unity-text-outline-color: rgba(0, 0, 0, 0);" />
+        <ui:VisualElement name="SettingsRoot" style="flex-grow: 1; background-color: rgb(183, 77, 77); width: auto;" />
+    </ui:VisualElement>
+</ui:UXML>
