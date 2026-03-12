@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using VRC.SDK3.Avatars.Components;
+using VRC.SDK3.Avatars.ScriptableObjects;
 
 namespace MomoVRChatTools.Editor
 {
@@ -51,7 +54,32 @@ namespace MomoVRChatTools.Editor
         }
         private void ScanAvatar()
         {
+            if (currentMenuGraph == null)
+            {
+                Debug.Log("f");
+                return;
+            }
+            VRCAvatarDescriptor avatarDescriptor = currentMenuGraph.GetAvatarDescriptor();
+            if (avatarDescriptor == null)
+            {
+                Debug.Log("y");
+                return;
+            }
+            if (avatarDescriptor.expressionsMenu == null)
+            {
+                Debug.Log("s");
+                return;
+            }
             Debug.Log($"Scaning {currentMenuGraph.name} Avatar..");
+
+            string rootMenuName = avatarDescriptor.expressionsMenu.name;
+            List<VRCExpressionsMenu.Control> rootMenu = avatarDescriptor.expressionsMenu.controls;
+
+            Debug.Log(rootMenuName);
+            for (int i = 0; i < rootMenu.Count; i++)
+            {
+                Debug.Log(rootMenu[i].name);
+            }
         }
         private void UpdateAvatar()
         {
@@ -63,7 +91,7 @@ namespace MomoVRChatTools.Editor
             VisualElement mainArea = rootVisualElement.Q("MainArea");
             VisualElement GraphArea = mainArea.Q("GraphRoot");
 
-            graphView = new MenuGraphView(this);
+            graphView = new MenuGraphView(this, currentMenuGraph);
             GraphArea.Add(graphView);
         }
     }
