@@ -151,9 +151,9 @@ namespace MomoVRChatTools.Editor
             if (currentMenuGraph == null) return;
             if (currentMenuGraph.AvatarMenus.Count == 0) return;
 
-            foreach (AvatarMenu avatarMenu in currentMenuGraph.AvatarMenus)
+            foreach (AvatarMenuNode avatarMenu in currentMenuGraph.AvatarMenus)
             {
-                graphView.AddNewNode(avatarMenu);
+                graphView.AddNodeToGraph(avatarMenu);
             }
         }
     }

@@ -16,14 +16,14 @@ namespace MomoVRChatTools
         // This is how to get the max number of VRCExpressionsMenu.Control there can be in any one array.
         //VRCExpressionsMenu.MAX_CONTROLS;
         [SerializeField] private List<VRCExpressionParameters.Parameter> avatarParameters = new List<VRCExpressionParameters.Parameter>();
-        [SerializeField] private List<AvatarMenu> avatarMenus = new List<AvatarMenu>();
+        [SerializeField] private List<AvatarMenuNode> avatarMenus = new List<AvatarMenuNode>();
         public List<VRCExpressionParameters.Parameter> AvatarParameters {  get { return avatarParameters; } }
-        public List<AvatarMenu> AvatarMenus {  get { return avatarMenus; } }
+        public List<AvatarMenuNode> AvatarMenus {  get { return avatarMenus; } }
 
         private void Reset()
         {
             avatarParameters = new List<VRCExpressionParameters.Parameter>();
-            avatarMenus = new List<AvatarMenu>();
+            avatarMenus = new List<AvatarMenuNode>();
         }
         public VRCAvatarDescriptor GetAvatarDescriptor()
         {
@@ -32,58 +32,15 @@ namespace MomoVRChatTools
             return avatarDescriptor;
         }
 
-        public AvatarMenu AddAvatarMenu(List<VRCExpressionsMenu.Control> controls, Rect position, string menuName = "New Menu", VRCExpressionsMenu realExpressionsMenu = null)
+        public AvatarMenuNode AddAvatarMenu(List<VRCExpressionsMenu.Control> controls, Rect position, string menuName = "New Menu", VRCExpressionsMenu realExpressionsMenu = null)
         {
-            AvatarMenu menu = new AvatarMenu(position, realExpressionsMenu);
+            AvatarMenuNode menu = new AvatarMenuNode(position, realExpressionsMenu);
             menu.menuName = menuName;
             menu.controls = controls;
 
             avatarMenus.Add(menu);
 
             return menu;
-        }
-    }
-
-    [Serializable]
-    public class AvatarMenu
-    {
-        //ID
-        [SerializeField] private string guid;
-
-        // Menu itself
-        [SerializeField] public string menuName;
-        [SerializeField] public List<VRCExpressionsMenu.Control> controls;
-        [SerializeField] private VRCExpressionsMenu realExpressionsMenu;
-
-        // Graph
-        [SerializeField] public Rect Position;
-        
-        /// <summary>
-        /// Get the GUID for this menu graph item
-        /// </summary>
-        public string GUID
-        {
-            get
-            {
-                // check that it still has a guid if not get it a new one.
-                if (string.IsNullOrEmpty(guid)) guid = Guid.NewGuid().ToString();
-                return guid;
-            }
-        }
-        /// <summary>
-        /// Get the VRCExpressionsMenu ScriptableObject that this AvatarMenu is representing
-        /// </summary>
-        public VRCExpressionsMenu RealExpressionsMenu { get {  return realExpressionsMenu; } }
-
-        /// <summary>
-        /// Crate a new avatarmenu item
-        /// </summary>
-        /// <param name="Position">The starting position and size of the graph item</param>
-        public AvatarMenu(Rect Position, VRCExpressionsMenu realExpressionsMenu)
-        {
-            guid = Guid.NewGuid().ToString();
-            this.Position = Position;
-            this.realExpressionsMenu = realExpressionsMenu;
         }
     }
 }

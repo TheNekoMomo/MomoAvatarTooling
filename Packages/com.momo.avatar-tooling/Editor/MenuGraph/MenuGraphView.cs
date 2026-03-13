@@ -15,6 +15,9 @@ namespace MomoVRChatTools.Editor
         private readonly MenuGraph menuGraph;
         // Pre set the node size so it is consistently set
         public static readonly Vector2 NODE_SIZE = new Vector2(200, 200);
+
+        [SerializeField] private List<AvatarMenuEditorNode> graphNodes = new List<AvatarMenuEditorNode>();
+
         // Create the GraphView
         public MenuGraphView(EditorWindow window, MenuGraph menuGraph)
         {
@@ -51,8 +54,8 @@ namespace MomoVRChatTools.Editor
             Vector2 mousePosition = context.screenMousePosition - window.position.position;
             Vector2 graphMousePosition = contentViewContainer.WorldToLocal(mousePosition);
 
-            AvatarMenu newMenu = menuGraph.AddAvatarMenu(new List<VRCExpressionsMenu.Control>(), new Rect(graphMousePosition, NODE_SIZE));
-            AddNewNode(newMenu);
+            AvatarMenuNode newMenu = menuGraph.AddAvatarMenu(new List<VRCExpressionsMenu.Control>(), new Rect(graphMousePosition, NODE_SIZE));
+            AddNodeToGraph(newMenu);
         }
         private GraphViewChange OnGraphViewChanged(GraphViewChange graphViewChange)
         {
@@ -69,65 +72,75 @@ namespace MomoVRChatTools.Editor
         }
         private void MovedElements(GraphViewChange graphViewChange)
         {
-            foreach (GraphElement element in graphViewChange.movedElements)
+            List<AvatarMenuEditorNode> nodes = graphViewChange.elementsToRemove.OfType<AvatarMenuEditorNode>().ToList();
+            if (nodes.Count != 0)
             {
-                Node node = element as Node;
-                if (node == null) continue;
-
-                string guid = node.name;
-                if (string.IsNullOrEmpty(guid)) continue;
-
-                AvatarMenu avatarMenu = menuGraph.AvatarMenus.First(menu => menu.GUID == guid);
-                if (avatarMenu == null) continue;
-
                 Undo.RecordObject(menuGraph, "Moved menu node");
-                avatarMenu.Position = node.GetPosition();
+
+                for (int i = 0; i < nodes.Count; i++)
+                {
+                    string guid = nodes[i].name;
+
+                    AvatarMenuNode avatarMenu = GetAvatarMenuNodeFromGUID(guid);
+                    if (avatarMenu == null) continue;
+
+
+                    avatarMenu.Position = nodes[i].GetPosition();
+                }
             }
         }
         private void RemovedElements(GraphViewChange graphViewChange)
         {
-            List<Node> nodes = graphViewChange.elementsToRemove.OfType<Node>().ToList();
-
-            if(nodes.Count != 0) Undo.RecordObject(menuGraph, "Removed menu nodes");
-            for (int i = nodes.Count - 1; i >= 0; i--)
+            List<AvatarMenuEditorNode> nodes = graphViewChange.elementsToRemove.OfType<AvatarMenuEditorNode>().ToList();
+            if(nodes.Count != 0)
             {
-                string guid = nodes[i].name;
-                if(string.IsNullOrEmpty(guid)) continue;
+                Undo.RecordObject(menuGraph, "Removed menu nodes");
 
-                AvatarMenu avatarMenu = menuGraph.AvatarMenus.First(menu => menu.GUID == guid);
-                if (avatarMenu == null) continue;
+                for (int i = nodes.Count - 1; i >= 0; i--)
+                {
+                    string guid = nodes[i].name;
+                    AvatarMenuNode avatarMenu = GetAvatarMenuNodeFromGUID(guid);
+                    if(avatarMenu == null) continue;
 
-                menuGraph.AvatarMenus.Remove(avatarMenu);
+                    menuGraph.AvatarMenus.Remove(avatarMenu);
+                    graphNodes.Remove(nodes[i]);
+                }
             }
         }
-
-        public void AddNewNode(AvatarMenu avatarMenu)
+        private AvatarMenuNode GetAvatarMenuNodeFromGUID(string guid)
         {
-            Node node = new Node();
+            if (string.IsNullOrEmpty(guid)) return null;
+            AvatarMenuNode avatarMenu = menuGraph.AvatarMenus.First(menu => menu.GUID == guid);
+            return avatarMenu;
+        }
 
-            node.title = avatarMenu.menuName;
-            node.SetPosition(avatarMenu.Position);
-            node.name = avatarMenu.GUID;
-
-            Port inputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(PortTypes.Menu));
-            inputPort.name = "Input";
-            node.inputContainer.Add(inputPort);
-
-            foreach (VRCExpressionsMenu.Control control in avatarMenu.controls)
-            {
-                if (control.type != VRCExpressionsMenu.Control.ControlType.SubMenu) continue;
-
-                Port subMenuPort = node.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(PortTypes.Menu));
-                subMenuPort.portName = control.name;
-                node.outputContainer.Add(subMenuPort);
-            }
+        public void AddNodeToGraph(AvatarMenuNode avatarMenu)
+        {
+            AvatarMenuEditorNode node = new AvatarMenuEditorNode(avatarMenu);
 
             AddElement(node);
+            graphNodes.Add(node);
         }
 
-        public class PortTypes
+        public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter)
         {
-            public class Menu { }
+            List<Port> allPorts = new List<Port>();
+            List<Port> ports = new List<Port>();
+
+            foreach (AvatarMenuEditorNode node in graphNodes)
+            {
+                allPorts.AddRange(node.Ports);
+            }
+
+            foreach (Port p in allPorts)
+            {
+                if (p == startPort) continue;
+                if (p.node == startPort.node) continue;
+                if (p.direction == startPort.direction) continue;
+                if(p.portType == startPort.portType) ports.Add(p);
+            }
+
+            return ports;
         }
     }
 }
