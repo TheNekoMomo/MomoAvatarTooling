@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -11,9 +10,10 @@ namespace MomoVRChatTools.Editor
 {
     public class MenuGraphEditorWindow : EditorWindow
     {
+        // The uxml template the window is build off
         [SerializeField] private VisualTreeAsset uxmlAsset;
 
-        private MenuGraph currentMenuGraph;
+        [SerializeField] private MenuGraph currentMenuGraph;
         private MenuGraphView graphView;
 
         public static void Open(MenuGraph target)
@@ -32,17 +32,30 @@ namespace MomoVRChatTools.Editor
             window.titleContent = new GUIContent($"{target.name}", EditorGUIUtility.ObjectContent(null, typeof(MenuGraph)).image);
             window.load(target);
         }
+        private void CreateGUI()
+        {
+            DrawGUI();
+        }
 
         private void load(MenuGraph target)
         {
             currentMenuGraph = target;
 
+            DrawGUI();
+        }
+        private void DrawGUI()
+        {
+            if (currentMenuGraph == null) return;
+
             uxmlAsset.CloneTree(rootVisualElement);
 
             AssignToolBarButtons();
             AddGraph();
+
+            PopulateGraph();
         }
 
+        // Adding funtions to the uxml Template
         private void AssignToolBarButtons()
         {
             Toolbar toolbar = rootVisualElement.Q<Toolbar>();
@@ -52,6 +65,16 @@ namespace MomoVRChatTools.Editor
             Button updateAvatar = toolbar.Q<Button>("UpdateAvatar");
             updateAvatar.clicked += UpdateAvatar;
         }
+        private void AddGraph()
+        {
+            VisualElement mainArea = rootVisualElement.Q("MainArea");
+            VisualElement GraphArea = mainArea.Q("GraphRoot");
+
+            graphView = new MenuGraphView(this, currentMenuGraph);
+            GraphArea.Add(graphView);
+        }
+
+        // Toolbar Buttons
         private void ScanAvatar()
         {
             if (currentMenuGraph == null)
@@ -72,27 +95,65 @@ namespace MomoVRChatTools.Editor
             }
             Debug.Log($"Scaning {currentMenuGraph.name} Avatar..");
 
-            string rootMenuName = avatarDescriptor.expressionsMenu.name;
-            List<VRCExpressionsMenu.Control> rootMenu = avatarDescriptor.expressionsMenu.controls;
-
-            Debug.Log(rootMenuName);
-            for (int i = 0; i < rootMenu.Count; i++)
-            {
-                Debug.Log(rootMenu[i].name);
-            }
+            currentMenuGraph.AvatarMenus.Clear();
+            SearchAvatarMenu(avatarDescriptor.expressionsMenu);
+            PopulateGraph();
         }
         private void UpdateAvatar()
         {
             Debug.Log($"Updating {currentMenuGraph.name} Avatar..");
         }
 
-        private void AddGraph()
-        {
-            VisualElement mainArea = rootVisualElement.Q("MainArea");
-            VisualElement GraphArea = mainArea.Q("GraphRoot");
 
-            graphView = new MenuGraphView(this, currentMenuGraph);
-            GraphArea.Add(graphView);
+        private void SearchAvatarMenu(VRCExpressionsMenu expressionsMenu)
+        {
+            // Menu Found
+            string menuName = expressionsMenu.name;
+            List<VRCExpressionsMenu.Control> menu = expressionsMenu.controls;
+
+            currentMenuGraph.AddAvatarMenu(menu, new Rect(Vector2.zero, MenuGraphView.NODE_SIZE), menuName);
+
+            // Check what this menu has in it
+            for (int i = 0; i < menu.Count; i++)
+            {
+                switch (menu[i].type)
+                {
+                    case VRCExpressionsMenu.Control.ControlType.Button:
+                        Debug.Log($"Found Button {menu[i].name}");
+                        break;
+                    case VRCExpressionsMenu.Control.ControlType.Toggle:
+                        Debug.Log($"Found Toggle {menu[i].name}");
+                        break;
+                    case VRCExpressionsMenu.Control.ControlType.SubMenu:
+                        // Found a Sub-Menu Check that
+                        Debug.Log($"Found Submenu {menu[i].name}");
+                        SearchAvatarMenu(menu[i].subMenu);
+                        break;
+                    case VRCExpressionsMenu.Control.ControlType.TwoAxisPuppet:
+                        Debug.Log($"Found TwoAxisPuppet {menu[i].name}");
+                        break;
+                    case VRCExpressionsMenu.Control.ControlType.FourAxisPuppet:
+                        Debug.Log($"Found FourAxisPuppet {menu[i].name}");
+                        break;
+                    case VRCExpressionsMenu.Control.ControlType.RadialPuppet:
+                        Debug.Log($"Found RadialPuppet {menu[i].name}");
+                        break;
+                    default:
+                        Debug.LogError("Found unknow ControlType : " + menu[i].name);
+                        break;
+                }
+            }
+        }
+
+        private void PopulateGraph()
+        {
+            if (currentMenuGraph == null) return;
+            if (currentMenuGraph.AvatarMenus.Count == 0) return;
+
+            foreach (AvatarMenu avatarMenu in currentMenuGraph.AvatarMenus)
+            {
+                graphView.AddNewNode(avatarMenu);
+            }
         }
     }
 }

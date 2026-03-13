@@ -1,17 +1,23 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 using VRC.SDK3.Avatars.ScriptableObjects;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 namespace MomoVRChatTools.Editor
 {
     public class MenuGraphView : GraphView
     {
+        // Catch the EditorWindow and MenuGraph for later use
         private readonly EditorWindow window;
         private readonly MenuGraph menuGraph;
-
+        // Pre set the node size so it is consistently set
+        public static readonly Vector2 NODE_SIZE = new Vector2(200, 200);
+        // Create the GraphView
         public MenuGraphView(EditorWindow window, MenuGraph menuGraph)
         {
             this.window = window;
@@ -24,8 +30,8 @@ namespace MomoVRChatTools.Editor
             AddGraphManipulators();
 
             nodeCreationRequest = UserRequestedNewMenuNode;
+            graphViewChanged = OnGraphViewChanged;
         }
-
         private void AddBackground()
         {
             GridBackground background = new GridBackground();
@@ -47,15 +53,68 @@ namespace MomoVRChatTools.Editor
             Vector2 mousePosition = context.screenMousePosition - window.position.position;
             Vector2 graphMousePosition = contentViewContainer.WorldToLocal(mousePosition);
 
-            AddNewNode(mousePosition);
+            AvatarMenu newMenu = menuGraph.AddAvatarMenu(new List<VRCExpressionsMenu.Control>(), new Rect(graphMousePosition, NODE_SIZE));
+            AddNewNode(newMenu);
+        }
+        private GraphViewChange OnGraphViewChanged(GraphViewChange graphViewChange)
+        {
+            if (graphViewChange.movedElements != null)
+            {
+                MovedElements(ref graphViewChange);
+            }
+            if(graphViewChange.elementsToRemove != null)
+            {
+                RemovedElements(ref graphViewChange);
+            }
+
+            return graphViewChange;
+        }
+        private void MovedElements(ref GraphViewChange graphViewChange)
+        {
+            foreach (GraphElement element in graphViewChange.movedElements)
+            {
+                Node node = element as Node;
+                if (node == null) continue;
+
+                string guid = node.name;
+                if (string.IsNullOrEmpty(guid)) continue;
+
+                AvatarMenu avatarMenu = menuGraph.AvatarMenus.First(menu => menu.GUID == guid);
+                if (avatarMenu == null) continue;
+
+                Undo.RecordObject(menuGraph, "Moved menu node");
+                avatarMenu.Position = node.GetPosition();
+                EditorUtility.SetDirty(menuGraph);
+            }
+        }
+        private void RemovedElements(ref GraphViewChange graphViewChange)
+        {
+            foreach (GraphElement element in graphViewChange.elementsToRemove)
+            {
+                Node node = element as Node;
+                if (node == null) continue;
+
+                string guid = node.name;
+                if (string.IsNullOrEmpty(guid)) continue;
+
+                AvatarMenu avatarMenu = menuGraph.AvatarMenus.First(menu => menu.GUID == guid);
+                if (avatarMenu == null) continue;
+
+                Undo.RecordObject(menuGraph, "Removed menu node");
+                menuGraph.AvatarMenus.Remove(avatarMenu);
+                EditorUtility.SetDirty(menuGraph);
+            }
+
+            Debug.Log("g");
         }
 
-        public void AddNewNode(Vector2 nodePosition, string nodeTitle = "New Menu")
+        public void AddNewNode(AvatarMenu avatarMenu)
         {
             Node node = new Node();
 
-            node.title = nodeTitle;
-            node.SetPosition(new Rect(nodePosition, new Vector2(200, 200)));
+            node.title = avatarMenu.menuName;
+            node.SetPosition(avatarMenu.Position);
+            node.name = avatarMenu.GUID;
 
             AddElement(node);
         }
