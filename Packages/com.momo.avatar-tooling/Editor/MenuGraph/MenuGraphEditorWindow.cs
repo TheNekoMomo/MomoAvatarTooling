@@ -32,7 +32,7 @@ namespace MomoVRChatTools.Editor
             window.titleContent = new GUIContent($"{target.name}", EditorGUIUtility.ObjectContent(null, typeof(MenuGraph)).image);
             window.load(target);
         }
-        private void CreateGUI()
+        private void OnEnable()
         {
             DrawGUI();
         }
@@ -54,6 +54,7 @@ namespace MomoVRChatTools.Editor
 
             PopulateGraph();
         }
+
 
         // Adding funtions to the uxml Template
         private void AssignToolBarButtons()
@@ -79,18 +80,18 @@ namespace MomoVRChatTools.Editor
         {
             if (currentMenuGraph == null)
             {
-                Debug.Log("f");
+                EditorUtility.DisplayDialog("Menu Graph", "Something went wrong, could not find the Menu Graph component.", "Ok");
                 return;
             }
             VRCAvatarDescriptor avatarDescriptor = currentMenuGraph.GetAvatarDescriptor();
             if (avatarDescriptor == null)
             {
-                Debug.Log("y");
+                EditorUtility.DisplayDialog("Menu Graph", "Something went wrong, could not find the Avatar Descriptor.", "Ok");
                 return;
             }
             if (avatarDescriptor.expressionsMenu == null)
             {
-                Debug.Log("s");
+                EditorUtility.DisplayDialog("Menu Graph", "This avatar does not have any expression menus setup right now.", "Ok");
                 return;
             }
             Debug.Log($"Scaning {currentMenuGraph.name} Avatar..");
@@ -108,10 +109,10 @@ namespace MomoVRChatTools.Editor
         private void SearchAvatarMenu(VRCExpressionsMenu expressionsMenu)
         {
             // Menu Found
-            string menuName = expressionsMenu.name;
+            string name = expressionsMenu.name;
             List<VRCExpressionsMenu.Control> menu = expressionsMenu.controls;
 
-            currentMenuGraph.AddAvatarMenu(menu, new Rect(Vector2.zero, MenuGraphView.NODE_SIZE), menuName);
+            currentMenuGraph.AddAvatarMenu(menu, new Rect(Vector2.zero, MenuGraphView.NODE_SIZE), realExpressionsMenu: expressionsMenu, menuName: name);
 
             // Check what this menu has in it
             for (int i = 0; i < menu.Count; i++)

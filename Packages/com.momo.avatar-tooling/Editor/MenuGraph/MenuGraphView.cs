@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -6,7 +5,6 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 using VRC.SDK3.Avatars.ScriptableObjects;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 namespace MomoVRChatTools.Editor
 {
@@ -29,8 +27,8 @@ namespace MomoVRChatTools.Editor
             AddBackground();
             AddGraphManipulators();
 
-            nodeCreationRequest = UserRequestedNewMenuNode;
-            graphViewChanged = OnGraphViewChanged;
+            nodeCreationRequest += UserRequestedNewMenuNode;
+            graphViewChanged += OnGraphViewChanged;
         }
         private void AddBackground()
         {
@@ -60,16 +58,16 @@ namespace MomoVRChatTools.Editor
         {
             if (graphViewChange.movedElements != null)
             {
-                MovedElements(ref graphViewChange);
+                MovedElements(graphViewChange);
             }
             if(graphViewChange.elementsToRemove != null)
             {
-                RemovedElements(ref graphViewChange);
+                RemovedElements(graphViewChange);
             }
 
             return graphViewChange;
         }
-        private void MovedElements(ref GraphViewChange graphViewChange)
+        private void MovedElements(GraphViewChange graphViewChange)
         {
             foreach (GraphElement element in graphViewChange.movedElements)
             {
@@ -84,28 +82,23 @@ namespace MomoVRChatTools.Editor
 
                 Undo.RecordObject(menuGraph, "Moved menu node");
                 avatarMenu.Position = node.GetPosition();
-                EditorUtility.SetDirty(menuGraph);
             }
         }
-        private void RemovedElements(ref GraphViewChange graphViewChange)
+        private void RemovedElements(GraphViewChange graphViewChange)
         {
-            foreach (GraphElement element in graphViewChange.elementsToRemove)
-            {
-                Node node = element as Node;
-                if (node == null) continue;
+            List<Node> nodes = graphViewChange.elementsToRemove.OfType<Node>().ToList();
 
-                string guid = node.name;
-                if (string.IsNullOrEmpty(guid)) continue;
+            if(nodes.Count != 0) Undo.RecordObject(menuGraph, "Removed menu nodes");
+            for (int i = nodes.Count - 1; i >= 0; i--)
+            {
+                string guid = nodes[i].name;
+                if(string.IsNullOrEmpty(guid)) continue;
 
                 AvatarMenu avatarMenu = menuGraph.AvatarMenus.First(menu => menu.GUID == guid);
                 if (avatarMenu == null) continue;
 
-                Undo.RecordObject(menuGraph, "Removed menu node");
                 menuGraph.AvatarMenus.Remove(avatarMenu);
-                EditorUtility.SetDirty(menuGraph);
             }
-
-            Debug.Log("g");
         }
 
         public void AddNewNode(AvatarMenu avatarMenu)
@@ -116,7 +109,25 @@ namespace MomoVRChatTools.Editor
             node.SetPosition(avatarMenu.Position);
             node.name = avatarMenu.GUID;
 
+            Port inputPort = node.InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(PortTypes.Menu));
+            inputPort.name = "Input";
+            node.inputContainer.Add(inputPort);
+
+            foreach (VRCExpressionsMenu.Control control in avatarMenu.controls)
+            {
+                if (control.type != VRCExpressionsMenu.Control.ControlType.SubMenu) continue;
+
+                Port subMenuPort = node.InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(PortTypes.Menu));
+                subMenuPort.portName = control.name;
+                node.outputContainer.Add(subMenuPort);
+            }
+
             AddElement(node);
+        }
+
+        public class PortTypes
+        {
+            public class Menu { }
         }
     }
 }

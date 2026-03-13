@@ -1,6 +1,5 @@
 using UnityEditor;
 using UnityEngine;
-using VRC.SDK3.Avatars.Components;
 
 namespace MomoVRChatTools.Editor
 {
@@ -8,6 +7,8 @@ namespace MomoVRChatTools.Editor
     [CustomEditor(typeof(MenuGraph))]
     public class MenuGraphEditor : UnityEditor.Editor
     {
+        private const string BugReportUrl = "https://github.com/TheNekoMomo/MomoAvatarTooling/issues/new";
+
         // Override the Inspector GUI for MenuGraph
         public override void OnInspectorGUI()
         {
@@ -22,6 +23,10 @@ namespace MomoVRChatTools.Editor
                     MenuGraphEditorWindow.Open(target as MenuGraph);
                 }
             }
+
+            EditorGUILayout.Space(10);
+            EditorGUILayout.HelpBox("This code is still in alpha. If you find any bugs, please report them.", MessageType.Warning);
+            if (GUILayout.Button("Report a Bug")) Application.OpenURL(BugReportUrl);
         }
     }
 }

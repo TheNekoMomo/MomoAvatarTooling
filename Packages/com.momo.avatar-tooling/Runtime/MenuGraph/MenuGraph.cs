@@ -32,9 +32,9 @@ namespace MomoVRChatTools
             return avatarDescriptor;
         }
 
-        public AvatarMenu AddAvatarMenu(List<VRCExpressionsMenu.Control> controls, Rect position, string menuName = "New Menu")
+        public AvatarMenu AddAvatarMenu(List<VRCExpressionsMenu.Control> controls, Rect position, string menuName = "New Menu", VRCExpressionsMenu realExpressionsMenu = null)
         {
-            AvatarMenu menu = new AvatarMenu(position);
+            AvatarMenu menu = new AvatarMenu(position, realExpressionsMenu);
             menu.menuName = menuName;
             menu.controls = controls;
 
@@ -47,25 +47,43 @@ namespace MomoVRChatTools
     [Serializable]
     public class AvatarMenu
     {
+        //ID
+        [SerializeField] private string guid;
+
+        // Menu itself
         [SerializeField] public string menuName;
         [SerializeField] public List<VRCExpressionsMenu.Control> controls;
+        [SerializeField] private VRCExpressionsMenu realExpressionsMenu;
 
+        // Graph
         [SerializeField] public Rect Position;
-
-        [SerializeField] private string guid;
+        
+        /// <summary>
+        /// Get the GUID for this menu graph item
+        /// </summary>
         public string GUID
         {
             get
             {
+                // check that it still has a guid if not get it a new one.
                 if (string.IsNullOrEmpty(guid)) guid = Guid.NewGuid().ToString();
                 return guid;
             }
         }
+        /// <summary>
+        /// Get the VRCExpressionsMenu ScriptableObject that this AvatarMenu is representing
+        /// </summary>
+        public VRCExpressionsMenu RealExpressionsMenu { get {  return realExpressionsMenu; } }
 
-        public AvatarMenu(Rect Position)
+        /// <summary>
+        /// Crate a new avatarmenu item
+        /// </summary>
+        /// <param name="Position">The starting position and size of the graph item</param>
+        public AvatarMenu(Rect Position, VRCExpressionsMenu realExpressionsMenu)
         {
             guid = Guid.NewGuid().ToString();
             this.Position = Position;
+            this.realExpressionsMenu = realExpressionsMenu;
         }
     }
 }
