@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using VRC.SDK3.Avatars.ScriptableObjects;
 
@@ -34,6 +35,19 @@ namespace MomoVRChatTools.Editor
                 subMenuPort.portName = control.name;
                 outputContainer.Add(subMenuPort);
                 ports.Add(subMenuPort);
+            }
+
+            RefreshPorts();
+            RefreshExpandedState();
+        }
+
+        public override void OnSelected()
+        {
+            base.OnSelected();
+
+            if(avatarMenuNode.RealExpressionsMenu != null)
+            {
+                Selection.activeObject = avatarMenuNode.RealExpressionsMenu;
             }
         }
     }

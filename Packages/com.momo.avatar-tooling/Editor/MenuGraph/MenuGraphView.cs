@@ -16,6 +16,7 @@ namespace MomoVRChatTools.Editor
         private readonly MenuGraph menuGraph;
         // Pre set the node size so it is consistently set
         public static readonly Vector2 NODE_SIZE = new Vector2(200, 200);
+        private readonly Vector2 miniMapSize = new Vector2(220, 160);
 
         [SerializeField] private List<AvatarMenuEditorNode> graphNodes = new List<AvatarMenuEditorNode>();
         [SerializeField] private Dictionary<Edge, MenuGraphConnection> editorConnectionDictionary = new Dictionary<Edge, MenuGraphConnection>();
@@ -30,6 +31,7 @@ namespace MomoVRChatTools.Editor
             this.StretchToParentSize();
 
             AddBackground();
+            AddMiniMap();
             AddGraphManipulators();
 
             PopulateGraph();
@@ -45,12 +47,36 @@ namespace MomoVRChatTools.Editor
             Add(background);
             background.SendToBack();
         }
+        private void AddMiniMap()
+        {
+            MiniMap miniMap = new MiniMap
+            {
+                anchored = true,
+                windowed = false
+            };
+
+            miniMap.SetPosition(new Rect(10, 30, miniMapSize.x, miniMapSize.y));
+            Add(miniMap);
+
+            RegisterCallback<GeometryChangedEvent>(evt =>
+            {
+                float width = miniMapSize.x;
+                float height = miniMapSize.y;
+
+                miniMap.SetPosition(new Rect(
+                    10,
+                    contentRect.height - height - 10,
+                    width,
+                    height));
+            });
+        }
         private void AddGraphManipulators()
         {
             this.AddManipulator(new ContentDragger());
             this.AddManipulator(new SelectionDragger());
             this.AddManipulator(new RectangleSelector());
             this.AddManipulator(new ClickSelector());
+            this.AddManipulator(new ContentZoomer());
         }
 
         // GraphView Delegates
@@ -154,7 +180,7 @@ namespace MomoVRChatTools.Editor
         private AvatarMenuNode GetAvatarMenuNodeFromGUID(string guid)
         {
             if (string.IsNullOrEmpty(guid)) return null;
-            AvatarMenuNode avatarMenu = menuGraph.AvatarMenus.First(menu => menu.GUID == guid);
+            AvatarMenuNode avatarMenu = menuGraph.AvatarMenus.FirstOrDefault(menu => menu.GUID == guid);
             return avatarMenu;
         }
 
@@ -162,12 +188,26 @@ namespace MomoVRChatTools.Editor
         {
             if (menuGraph.AvatarMenus.Count == 0) return;
 
+            ClearGraph();
+
             foreach (AvatarMenuNode avatarMenu in menuGraph.AvatarMenus)
             {
                 AddNodeToGraph(avatarMenu);
             }
 
             DrawConnections();
+        }
+        public void ClearGraph()
+        {
+            graphViewChanged -= OnGraphViewChanged;
+
+            List<GraphElement> elementsToRemove = graphElements.ToList();
+            DeleteElements(elementsToRemove);
+
+            graphNodes.Clear();
+            editorConnectionDictionary.Clear();
+
+            graphViewChanged += OnGraphViewChanged;
         }
 
         private void DrawConnections()
@@ -180,10 +220,16 @@ namespace MomoVRChatTools.Editor
 
                 if (inputNode == null || outputNode == null) continue;
 
+                if (connection.inputPort.portIndex < 0 || connection.inputPort.portIndex >= inputNode.Ports.Count) continue;
+                if (connection.outputPort.portIndex < 0 || connection.outputPort.portIndex >= outputNode.Ports.Count) continue;
+
                 Port inputPort = inputNode.Ports[connection.inputPort.portIndex];
                 Port outputPort = outputNode.Ports[connection.outputPort.portIndex];
 
-                Edge edge = inputPort.ConnectTo(outputPort);
+                if (inputPort.direction != Direction.Input) continue;
+                if (outputPort.direction != Direction.Output) continue;
+
+                Edge edge = outputPort.ConnectTo(inputPort);
 
                 AddElement(edge);
                 editorConnectionDictionary.Add(edge, connection);
@@ -199,7 +245,6 @@ namespace MomoVRChatTools.Editor
         private void AddNodeToGraph(AvatarMenuNode avatarMenu)
         {
             AvatarMenuEditorNode node = new AvatarMenuEditorNode(avatarMenu);
-
             AddElement(node);
             graphNodes.Add(node);
         }

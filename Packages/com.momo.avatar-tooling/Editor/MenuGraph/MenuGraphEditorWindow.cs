@@ -16,6 +16,8 @@ namespace MomoVRChatTools.Editor
         [SerializeField] private MenuGraph currentMenuGraph;
         private MenuGraphView graphView;
 
+        private Dictionary<int, int> depthRowCounts = new();
+
         public static void Open(MenuGraph target)
         {
             MenuGraphEditorWindow[] windows = Resources.FindObjectsOfTypeAll<MenuGraphEditorWindow>();
@@ -47,6 +49,7 @@ namespace MomoVRChatTools.Editor
         {
             if (currentMenuGraph == null) return;
 
+            rootVisualElement.Clear();
             uxmlAsset.CloneTree(rootVisualElement);
 
             AssignToolBarButtons();
@@ -94,8 +97,13 @@ namespace MomoVRChatTools.Editor
             }
             Debug.Log($"Scaning {currentMenuGraph.name} Avatar..");
 
+            depthRowCounts.Clear();
+
             currentMenuGraph.AvatarMenus.Clear();
+            currentMenuGraph.Connections.Clear();
+
             SearchAvatarMenu(avatarDescriptor.expressionsMenu);
+
             graphView.PopulateGraph();
         }
         private void UpdateAvatar()
@@ -103,14 +111,34 @@ namespace MomoVRChatTools.Editor
             Debug.Log($"Updating {currentMenuGraph.name} Avatar..");
         }
 
-        private void SearchAvatarMenu(VRCExpressionsMenu expressionsMenu, AvatarMenuNode parentMenu = null, int parentMenuIndex = 0)
+        private void SearchAvatarMenu(VRCExpressionsMenu expressionsMenu, AvatarMenuNode parentMenu = null, int parentMenuIndex = 0, int depth = 0)
         {
             // Menu Found
             string name = expressionsMenu.name;
             List<VRCExpressionsMenu.Control> menu = expressionsMenu.controls;
+            int submenuPortIndex = 1; // 0 is the input port on the graph node
+
+            // Get the spacing for the node
+            if (!depthRowCounts.ContainsKey(depth)) depthRowCounts[depth] = 0;
+
+            float xSpacing = 250f;
+            float ySpacing = 120f;
+
+            int row = depthRowCounts[depth];
+            depthRowCounts[depth]++;
+
+            Rect position = new Rect(
+                new Vector2(depth * xSpacing, row * ySpacing),
+                MenuGraphView.NODE_SIZE
+            );
 
             AvatarMenuNode createdAvatarMenu = currentMenuGraph.AddAvatarMenu
-                (menu, new Rect(Vector2.zero, MenuGraphView.NODE_SIZE), realExpressionsMenu: expressionsMenu, menuName: name);
+            (
+                menu,
+                position, 
+                realExpressionsMenu: expressionsMenu, 
+                menuName: name
+            );
 
             if (parentMenu != null)
             {
@@ -127,27 +155,30 @@ namespace MomoVRChatTools.Editor
                 switch (menu[i].type)
                 {
                     case VRCExpressionsMenu.Control.ControlType.Button:
-                        Debug.Log($"Found Button {menu[i].name}");
+                        //Debug.Log($"Found Button {menu[i].name}");
                         break;
                     case VRCExpressionsMenu.Control.ControlType.Toggle:
-                        Debug.Log($"Found Toggle {menu[i].name}");
+                        //Debug.Log($"Found Toggle {menu[i].name}");
                         break;
                     case VRCExpressionsMenu.Control.ControlType.SubMenu:
-                        // Found a Sub-Menu Check that
-                        Debug.Log($"Found Submenu {menu[i].name}");
-                        SearchAvatarMenu(menu[i].subMenu, createdAvatarMenu, i);
+                        //Debug.Log($"Found Submenu {menu[i].name}");
+                        if(menu[i].subMenu != null)
+                        {
+                            SearchAvatarMenu(menu[i].subMenu, createdAvatarMenu, submenuPortIndex, depth + 1);
+                            submenuPortIndex++;
+                        }
                         break;
                     case VRCExpressionsMenu.Control.ControlType.TwoAxisPuppet:
-                        Debug.Log($"Found TwoAxisPuppet {menu[i].name}");
+                        //Debug.Log($"Found TwoAxisPuppet {menu[i].name}");
                         break;
                     case VRCExpressionsMenu.Control.ControlType.FourAxisPuppet:
-                        Debug.Log($"Found FourAxisPuppet {menu[i].name}");
+                        //Debug.Log($"Found FourAxisPuppet {menu[i].name}");
                         break;
                     case VRCExpressionsMenu.Control.ControlType.RadialPuppet:
-                        Debug.Log($"Found RadialPuppet {menu[i].name}");
+                        //Debug.Log($"Found RadialPuppet {menu[i].name}");
                         break;
                     default:
-                        Debug.LogError("Found unknow ControlType : " + menu[i].name);
+                        //Debug.LogError("Found unknow ControlType : " + menu[i].name);
                         break;
                 }
             }
