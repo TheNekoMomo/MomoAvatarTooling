@@ -7,7 +7,7 @@ using VRC.SDKBase;
 
 namespace MomoVRChatTools
 {
-    [RequireComponent(typeof(VRCAvatarDescriptor))]
+    [RequireComponent(typeof(VRCAvatarDescriptor)), AddComponentMenu("MomoVRChatTools/MenuGraph")]
     public class MenuGraph : MonoBehaviour, IEditorOnly
     {
         private VRCAvatarDescriptor avatarDescriptor;

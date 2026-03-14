@@ -17,6 +17,13 @@ namespace MomoVRChatTools.Editor
         private MenuGraphView graphView;
 
         private Dictionary<int, int> depthRowCounts = new();
+        private int NumberOfMenusScaned = 0;
+        private int NumberOfButtonsScaned = 0;
+        private int NumberOfTogglesScaned = 0;
+        private int NumberOfSubMenusScaned = 0;
+        private int NumberOfTwoAxisPuppetsScaned = 0;
+        private int NumberOfFourAxisPuppetsScaned = 0;
+        private int NumberOfRadialPuppetsScaned = 0;
 
         public static void Open(MenuGraph target)
         {
@@ -97,6 +104,14 @@ namespace MomoVRChatTools.Editor
             }
             Debug.Log($"Scaning {currentMenuGraph.name} Avatar..");
 
+            NumberOfMenusScaned = 0;
+            NumberOfButtonsScaned = 0;
+            NumberOfTogglesScaned = 0;
+            NumberOfSubMenusScaned = 0;
+            NumberOfTwoAxisPuppetsScaned = 0;
+            NumberOfFourAxisPuppetsScaned = 0;
+            NumberOfRadialPuppetsScaned = 0;
+
             depthRowCounts.Clear();
 
             currentMenuGraph.AvatarMenus.Clear();
@@ -105,6 +120,20 @@ namespace MomoVRChatTools.Editor
             SearchAvatarMenu(avatarDescriptor.expressionsMenu);
 
             graphView.PopulateGraph();
+
+            string statsMessage =
+                $@"Scan Complete
+
+                Menus Scanned: {NumberOfMenusScaned}
+
+                Buttons:            {NumberOfButtonsScaned}
+                Toggles:            {NumberOfTogglesScaned}
+                SubMenus:           {NumberOfSubMenusScaned}
+
+                Two Axis Puppets:   {NumberOfTwoAxisPuppetsScaned}
+                Four Axis Puppets:  {NumberOfFourAxisPuppetsScaned}
+                Radial Puppets:     {NumberOfRadialPuppetsScaned}";
+            EditorUtility.DisplayDialog("Menu Graph", statsMessage, "OK");
         }
         private void UpdateAvatar()
         {
@@ -113,6 +142,8 @@ namespace MomoVRChatTools.Editor
 
         private void SearchAvatarMenu(VRCExpressionsMenu expressionsMenu, AvatarMenuNode parentMenu = null, int parentMenuIndex = 0, int depth = 0)
         {
+            NumberOfMenusScaned++;
+
             // Menu Found
             string name = expressionsMenu.name;
             List<VRCExpressionsMenu.Control> menu = expressionsMenu.controls;
@@ -128,7 +159,7 @@ namespace MomoVRChatTools.Editor
             depthRowCounts[depth]++;
 
             Rect position = new Rect(
-                new Vector2(depth * xSpacing, row * ySpacing),
+                new Vector2(depth * xSpacing, row * ySpacing * (menu.Count / 2f)),
                 MenuGraphView.NODE_SIZE
             );
 
@@ -155,12 +186,15 @@ namespace MomoVRChatTools.Editor
                 switch (menu[i].type)
                 {
                     case VRCExpressionsMenu.Control.ControlType.Button:
+                        NumberOfButtonsScaned++;
                         //Debug.Log($"Found Button {menu[i].name}");
                         break;
                     case VRCExpressionsMenu.Control.ControlType.Toggle:
+                        NumberOfTogglesScaned++;
                         //Debug.Log($"Found Toggle {menu[i].name}");
                         break;
                     case VRCExpressionsMenu.Control.ControlType.SubMenu:
+                        NumberOfSubMenusScaned++;
                         //Debug.Log($"Found Submenu {menu[i].name}");
                         if(menu[i].subMenu != null)
                         {
@@ -169,12 +203,15 @@ namespace MomoVRChatTools.Editor
                         }
                         break;
                     case VRCExpressionsMenu.Control.ControlType.TwoAxisPuppet:
+                        NumberOfTwoAxisPuppetsScaned++;
                         //Debug.Log($"Found TwoAxisPuppet {menu[i].name}");
                         break;
                     case VRCExpressionsMenu.Control.ControlType.FourAxisPuppet:
+                        NumberOfFourAxisPuppetsScaned++;
                         //Debug.Log($"Found FourAxisPuppet {menu[i].name}");
                         break;
                     case VRCExpressionsMenu.Control.ControlType.RadialPuppet:
+                        NumberOfRadialPuppetsScaned++;
                         //Debug.Log($"Found RadialPuppet {menu[i].name}");
                         break;
                     default:
@@ -183,7 +220,5 @@ namespace MomoVRChatTools.Editor
                 }
             }
         }
-
-        
     }
 }
