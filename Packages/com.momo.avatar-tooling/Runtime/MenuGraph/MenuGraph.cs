@@ -20,10 +20,14 @@ namespace MomoVRChatTools
         public List<VRCExpressionParameters.Parameter> AvatarParameters {  get { return avatarParameters; } }
         public List<AvatarMenuNode> AvatarMenus {  get { return avatarMenus; } }
 
+        [SerializeField] private List<MenuGraphConnection> connections = new List<MenuGraphConnection>();
+        public List<MenuGraphConnection> Connections { get { return connections; } }
+
         private void Reset()
         {
             avatarParameters = new List<VRCExpressionParameters.Parameter>();
             avatarMenus = new List<AvatarMenuNode>();
+            connections = new List<MenuGraphConnection>();
         }
         public VRCAvatarDescriptor GetAvatarDescriptor()
         {

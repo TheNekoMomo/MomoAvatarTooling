@@ -51,8 +51,6 @@ namespace MomoVRChatTools.Editor
 
             AssignToolBarButtons();
             AddGraph();
-
-            PopulateGraph();
         }
 
 
@@ -98,21 +96,30 @@ namespace MomoVRChatTools.Editor
 
             currentMenuGraph.AvatarMenus.Clear();
             SearchAvatarMenu(avatarDescriptor.expressionsMenu);
-            PopulateGraph();
+            graphView.PopulateGraph();
         }
         private void UpdateAvatar()
         {
             Debug.Log($"Updating {currentMenuGraph.name} Avatar..");
         }
 
-
-        private void SearchAvatarMenu(VRCExpressionsMenu expressionsMenu)
+        private void SearchAvatarMenu(VRCExpressionsMenu expressionsMenu, AvatarMenuNode parentMenu = null, int parentMenuIndex = 0)
         {
             // Menu Found
             string name = expressionsMenu.name;
             List<VRCExpressionsMenu.Control> menu = expressionsMenu.controls;
 
-            currentMenuGraph.AddAvatarMenu(menu, new Rect(Vector2.zero, MenuGraphView.NODE_SIZE), realExpressionsMenu: expressionsMenu, menuName: name);
+            AvatarMenuNode createdAvatarMenu = currentMenuGraph.AddAvatarMenu
+                (menu, new Rect(Vector2.zero, MenuGraphView.NODE_SIZE), realExpressionsMenu: expressionsMenu, menuName: name);
+
+            if (parentMenu != null)
+            {
+                // Input = new menu
+                // Output = parent menu
+                MenuGraphConnectionPort input = new MenuGraphConnectionPort(createdAvatarMenu.GUID, 0);
+                MenuGraphConnectionPort output = new MenuGraphConnectionPort(parentMenu.GUID, parentMenuIndex);
+                currentMenuGraph.Connections.Add(new MenuGraphConnection(input, output));
+            }
 
             // Check what this menu has in it
             for (int i = 0; i < menu.Count; i++)
@@ -128,7 +135,7 @@ namespace MomoVRChatTools.Editor
                     case VRCExpressionsMenu.Control.ControlType.SubMenu:
                         // Found a Sub-Menu Check that
                         Debug.Log($"Found Submenu {menu[i].name}");
-                        SearchAvatarMenu(menu[i].subMenu);
+                        SearchAvatarMenu(menu[i].subMenu, createdAvatarMenu, i);
                         break;
                     case VRCExpressionsMenu.Control.ControlType.TwoAxisPuppet:
                         Debug.Log($"Found TwoAxisPuppet {menu[i].name}");
@@ -146,15 +153,6 @@ namespace MomoVRChatTools.Editor
             }
         }
 
-        private void PopulateGraph()
-        {
-            if (currentMenuGraph == null) return;
-            if (currentMenuGraph.AvatarMenus.Count == 0) return;
-
-            foreach (AvatarMenuNode avatarMenu in currentMenuGraph.AvatarMenus)
-            {
-                graphView.AddNodeToGraph(avatarMenu);
-            }
-        }
+        
     }
 }
