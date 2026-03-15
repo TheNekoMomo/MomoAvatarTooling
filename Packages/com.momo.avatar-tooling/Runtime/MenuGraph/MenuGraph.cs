@@ -10,22 +10,24 @@ namespace MomoVRChatTools
     [RequireComponent(typeof(VRCAvatarDescriptor)), AddComponentMenu("MomoVRChatTools/MenuGraph")]
     public class MenuGraph : MonoBehaviour, IEditorOnly
     {
+        // The avatars Descriptor
         private VRCAvatarDescriptor avatarDescriptor;
 
-        // Storing the Parameters and Menus here so they can be edited without touching the scriptableObjects
-        // This is how to get the max number of VRCExpressionsMenu.Control there can be in any one array.
-        //VRCExpressionsMenu.MAX_CONTROLS;
-        [SerializeField] private List<VRCExpressionParameters.Parameter> avatarParameters = new List<VRCExpressionParameters.Parameter>();
+        // All of the menus on the avatar
         [SerializeField] private List<AvatarMenuNode> avatarMenus = new List<AvatarMenuNode>();
-        public List<VRCExpressionParameters.Parameter> AvatarParameters {  get { return avatarParameters; } }
         public List<AvatarMenuNode> AvatarMenus {  get { return avatarMenus; } }
 
+        // List of all the Paramters for the avatar
+        [SerializeField] private List<MenuGraphParamter> avatarParamters = new List<MenuGraphParamter>();
+        public List<MenuGraphParamter> AvatarParamters { get { return avatarParamters; } }
+
+        // All the connections inside the nodes between the menus
         [SerializeField] private List<MenuGraphConnection> connections = new List<MenuGraphConnection>();
         public List<MenuGraphConnection> Connections { get { return connections; } }
 
         private void Reset()
         {
-            avatarParameters = new List<VRCExpressionParameters.Parameter>();
+            //avatarParameters = new List<VRCExpressionParameters.Parameter>();
             avatarMenus = new List<AvatarMenuNode>();
             connections = new List<MenuGraphConnection>();
         }
@@ -36,15 +38,17 @@ namespace MomoVRChatTools
             return avatarDescriptor;
         }
 
-        public AvatarMenuNode AddAvatarMenu(List<VRCExpressionsMenu.Control> controls, Rect position, string menuName = "New Menu", VRCExpressionsMenu realExpressionsMenu = null)
+        public AvatarMenuNode AddAvatarMenu(Rect position, VRCExpressionsMenu realExpressionsMenu)
         {
             AvatarMenuNode menu = new AvatarMenuNode(position, realExpressionsMenu);
-            menu.menuName = menuName;
-            menu.controls = controls;
-
             avatarMenus.Add(menu);
-
             return menu;
         }
-    }
+        public AvatarMenuNode AddAvatarMenu(Rect position, string menuName = "New Menu")
+        {
+            AvatarMenuNode menu = new AvatarMenuNode(position, menuName);
+            avatarMenus.Add(menu);
+            return menu;
+        }
+     }
 }

@@ -1,8 +1,10 @@
+using System;
 using VRC.SDK3.Avatars.ScriptableObjects;
 
 namespace MomoVRChatTools
 {
-    public struct MenuGraphParamter
+    [Serializable]
+    public class MenuGraphParamter
     {
         public string name;
         public VRCExpressionParameters.ValueType valueType;

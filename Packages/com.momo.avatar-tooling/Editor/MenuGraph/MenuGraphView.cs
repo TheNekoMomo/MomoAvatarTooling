@@ -88,7 +88,7 @@ namespace MomoVRChatTools.Editor
             Vector2 mousePosition = context.screenMousePosition - window.position.position;
             Vector2 graphMousePosition = contentViewContainer.WorldToLocal(mousePosition);
 
-            AvatarMenuNode newMenu = menuGraph.AddAvatarMenu(new List<VRCExpressionsMenu.Control>(), new Rect(graphMousePosition, NODE_SIZE));
+            AvatarMenuNode newMenu = menuGraph.AddAvatarMenu(new Rect(graphMousePosition, NODE_SIZE));
             AddNodeToGraph(newMenu);
         }
         private GraphViewChange OnGraphViewChanged(GraphViewChange graphViewChange)

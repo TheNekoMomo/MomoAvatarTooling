@@ -51,16 +51,14 @@ namespace MomoVRChatTools.Editor
             ports.Add(inputPort);
 
             // Loop over all the controls so that can add a editable element for it
-            foreach (VRCExpressionsMenu.Control control in avatarMenuNode.controls)
+            foreach (var control in avatarMenuNode.controls)
             {
                 switch (control.type)
                 {
                     case VRCExpressionsMenu.Control.ControlType.Button:
-                        AddBoolField(control);
                         break;
 
                     case VRCExpressionsMenu.Control.ControlType.Toggle:
-                        AddBoolField(control);
                         break;
 
                     case VRCExpressionsMenu.Control.ControlType.SubMenu:
@@ -77,7 +75,6 @@ namespace MomoVRChatTools.Editor
                         break;
 
                     case VRCExpressionsMenu.Control.ControlType.RadialPuppet:
-                        AddFloatField(control);
                         break;
 
                     default:

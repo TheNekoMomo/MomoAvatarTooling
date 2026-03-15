@@ -145,7 +145,6 @@ namespace MomoVRChatTools.Editor
             NumberOfMenusScaned++;
 
             // Menu Found
-            string name = expressionsMenu.name;
             List<VRCExpressionsMenu.Control> menu = expressionsMenu.controls;
             int submenuPortIndex = 1; // 0 is the input port on the graph node
 
@@ -163,13 +162,7 @@ namespace MomoVRChatTools.Editor
                 MenuGraphView.NODE_SIZE
             );
 
-            AvatarMenuNode createdAvatarMenu = currentMenuGraph.AddAvatarMenu
-            (
-                menu,
-                position, 
-                realExpressionsMenu: expressionsMenu, 
-                menuName: name
-            );
+            AvatarMenuNode createdAvatarMenu = currentMenuGraph.AddAvatarMenu(position, expressionsMenu);
 
             if (parentMenu != null)
             {
@@ -178,6 +171,8 @@ namespace MomoVRChatTools.Editor
                 MenuGraphConnectionPort input = new MenuGraphConnectionPort(createdAvatarMenu.GUID, 0);
                 MenuGraphConnectionPort output = new MenuGraphConnectionPort(parentMenu.GUID, parentMenuIndex);
                 currentMenuGraph.Connections.Add(new MenuGraphConnection(input, output));
+
+                parentMenu.controls[0].subMenu = createdAvatarMenu;
             }
 
             // Check what this menu has in it

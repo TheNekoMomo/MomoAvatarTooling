@@ -5,7 +5,7 @@ using VRC.SDK3.Avatars.ScriptableObjects;
 namespace MomoVRChatTools
 {
     [Serializable]
-    public struct MenuGraphControl
+    public class MenuGraphControl
     {
         public string name;
         public Texture2D icon;
