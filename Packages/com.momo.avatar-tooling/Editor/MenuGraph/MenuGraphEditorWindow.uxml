@@ -7,6 +7,6 @@
     </uie:Toolbar>
     <ui:VisualElement name="MainArea" style="flex-grow: 1; align-items: stretch; justify-content: center; align-self: auto; display: flex; visibility: visible; overflow: visible; position: relative; left: auto; flex-basis: auto; flex-shrink: 1; flex-direction: row; height: auto; width: auto; max-width: 10000%; max-height: 10000%; min-width: 50%; min-height: 50%;">
         <ui:VisualElement name="GraphRoot" style="flex-grow: 1; background-color: rgb(86, 164, 110); width: 50%; align-items: flex-start; justify-content: flex-start; flex-direction: column; align-self: auto; -unity-text-outline-color: rgba(0, 0, 0, 0);" />
-        <ui:VisualElement name="SettingsRoot" style="flex-grow: 1; background-color: rgb(183, 77, 77); width: auto;" />
+        <ui:VisualElement name="SettingsRoot" style="flex-grow: 1; background-color: rgb(183, 77, 77); width: auto; display: none;" />
     </ui:VisualElement>
 </ui:UXML>

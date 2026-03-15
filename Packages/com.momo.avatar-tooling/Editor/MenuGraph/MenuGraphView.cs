@@ -14,12 +14,15 @@ namespace MomoVRChatTools.Editor
         // Catch the EditorWindow and MenuGraph for later use
         private readonly MenuGraphEditorWindow window;
         private readonly MenuGraph menuGraph;
+
         // Pre set the node size so it is consistently set
         public static readonly Vector2 NODE_SIZE = new Vector2(200, 200);
         private readonly Vector2 miniMapSize = new Vector2(220, 160);
 
         [SerializeField] private List<AvatarMenuEditorNode> graphNodes = new List<AvatarMenuEditorNode>();
         [SerializeField] private Dictionary<Edge, MenuGraphConnection> editorConnectionDictionary = new Dictionary<Edge, MenuGraphConnection>();
+
+        public Blackboard blackBoard;
 
         // Create the GraphView
         public MenuGraphView(MenuGraphEditorWindow window, MenuGraph menuGraph)
@@ -31,17 +34,18 @@ namespace MomoVRChatTools.Editor
             this.StretchToParentSize();
 
             AddBackground();
-            AddMiniMap();
             AddGraphManipulators();
 
-            //var blackBoard = new Blackboard();
-            //Add(blackBoard);
+            AddBlackBoard();
 
             PopulateGraph();
+
+            AddMiniMap();
 
             nodeCreationRequest += UserRequestedNewMenuNode;
             graphViewChanged += OnGraphViewChanged;
         }
+
         private void AddBackground()
         {
             GridBackground background = new GridBackground();
@@ -80,6 +84,128 @@ namespace MomoVRChatTools.Editor
             this.AddManipulator(new RectangleSelector());
             this.AddManipulator(new ClickSelector());
             this.AddManipulator(new ContentZoomer());
+        }
+        private void AddBlackBoard()
+        {
+            blackBoard = new Blackboard(this);
+
+            blackBoard.title = "Parameters";
+            blackBoard.subTitle = "Parameters";
+
+            blackBoard.addItemRequested = bb =>
+            {
+                MenuGraphParamter paramter = new MenuGraphParamter();
+                menuGraph.AvatarParamters.Add(paramter);
+                AddParameterToBlackboard(paramter);
+            };
+            blackBoard.editTextRequested += OnBlackboardEdit;
+
+            blackBoard.scrollable = true;
+
+            Add(blackBoard);
+            BuildBlackboard();
+        }
+        public void BuildBlackboard()
+        {
+            blackBoard.Clear();
+
+            foreach (MenuGraphParamter paramter in menuGraph.AvatarParamters)
+            {
+                AddParameterToBlackboard(paramter);
+            }
+        }
+
+        private void AddParameterToBlackboard(MenuGraphParamter paramter)
+        {
+            BlackboardField field = new BlackboardField
+            {
+                text = paramter.name,
+                typeText = paramter.valueType.ToString(),
+                userData = paramter
+            };
+
+            VisualElement propertyView = new VisualElement();
+
+            EnumField typeField = new EnumField(paramter.valueType);
+            typeField.RegisterValueChangedCallback(evt => 
+            {
+                paramter.valueType = (VRCExpressionParameters.ValueType)evt.newValue;
+            });
+            propertyView.Add(typeField);
+
+            switch (paramter.valueType)
+            {
+                case VRCExpressionParameters.ValueType.Int:
+                    IntegerField intField = new IntegerField("Default Value")
+                    {
+                        value = (int)paramter.defaultValue
+                    };
+                    intField.RegisterValueChangedCallback(evt =>
+                    {
+                        paramter.defaultValue = evt.newValue;
+                    });
+                    propertyView.Add(intField);
+                    break;
+                case VRCExpressionParameters.ValueType.Float:
+                    FloatField floatField = new FloatField("Default Value")
+                    {
+                        value = paramter.defaultValue
+                    };
+                    floatField.RegisterValueChangedCallback(evt =>
+                    {
+                        paramter.defaultValue = evt.newValue;
+                    });
+                    propertyView.Add(floatField);
+                    break;
+                case VRCExpressionParameters.ValueType.Bool:
+                    Toggle boolField = new Toggle("Default Value")
+                    {
+                        value = paramter.defaultValue >= 1
+                    };
+                    boolField.RegisterValueChangedCallback(evt =>
+                    {
+                        paramter.defaultValue = evt.newValue ? 1 : 0;
+                    });
+                    propertyView.Add(boolField);
+                    break;
+                default:
+                    Debug.LogError("Paramter Added with unknown, Type: " + paramter.valueType);
+                    break;
+            }
+
+            Toggle savedField = new Toggle("Saved")
+            {
+                value = paramter.saved
+            };
+            savedField.RegisterValueChangedCallback(evt =>
+            {
+                paramter.saved = evt.newValue;
+            });
+            propertyView.Add(savedField);
+
+            Toggle networkSyncedField = new Toggle("Network Synced")
+            {
+                value = paramter.networkSynced
+            };
+            networkSyncedField.RegisterValueChangedCallback(evt =>
+            {
+                paramter.networkSynced = evt.newValue;
+            });
+            propertyView.Add(networkSyncedField);
+
+            BlackboardRow row = new BlackboardRow(field, propertyView);
+            blackBoard.Add(row);
+        }
+        private void OnBlackboardEdit(Blackboard blackboard, VisualElement element, string newValue)
+        {
+            if(element is BlackboardField field && field.userData is MenuGraphParamter paramter)
+            {
+                if (string.IsNullOrEmpty(newValue)) newValue = "New Paramter";
+                paramter.name = newValue;
+
+                field.text = newValue;
+                EditorUtility.SetDirty(menuGraph);
+            }
         }
 
         // GraphView Delegates

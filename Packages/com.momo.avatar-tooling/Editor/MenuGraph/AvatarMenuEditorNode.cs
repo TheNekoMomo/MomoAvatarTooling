@@ -39,6 +39,15 @@ namespace MomoVRChatTools.Editor
             });
             titleContainer.Add(titleField);
 
+            var addButton = new Button(() =>
+            {
+                if (avatarMenuNode.controls.Count >= 8) return;
+                avatarMenuNode.controls.Add(new MenuGraphControl());
+            });
+            addButton.text = "Add";
+            addButton.tooltip = "Add a new field";
+            extensionContainer.Add(addButton);
+
             // Set the name of the visual element so it can be found based on the GUID
             name = avatarMenuNode.GUID;
             // Set the start position of the node

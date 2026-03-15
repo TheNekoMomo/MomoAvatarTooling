@@ -45,6 +45,14 @@ namespace MomoVRChatTools.Editor
         {
             DrawGUI();
         }
+        private void OnDestroy()
+        {
+            currentMenuGraph.LoadGraphView = true;
+            currentMenuGraph.graphViewPosition = graphView.viewTransform.position;
+            currentMenuGraph.graphViewScale = graphView.viewTransform.scale;
+            currentMenuGraph.loadBlackBoard = true;
+            currentMenuGraph.blackBoardPosition = graphView.blackBoard.GetPosition();
+        }
 
         private void load(MenuGraph target)
         {
@@ -61,6 +69,11 @@ namespace MomoVRChatTools.Editor
 
             AssignToolBarButtons();
             AddGraph();
+
+            if(currentMenuGraph.LoadGraphView)
+                graphView.UpdateViewTransform(currentMenuGraph.graphViewPosition, currentMenuGraph.graphViewScale);
+            if(currentMenuGraph.loadBlackBoard)
+                graphView.blackBoard.SetPosition(currentMenuGraph.blackBoardPosition);
         }
 
 
@@ -115,11 +128,18 @@ namespace MomoVRChatTools.Editor
             depthRowCounts.Clear();
 
             currentMenuGraph.AvatarMenus.Clear();
+            currentMenuGraph.AvatarParamters.Clear();
             currentMenuGraph.Connections.Clear();
 
             SearchAvatarMenu(avatarDescriptor.expressionsMenu);
+            VRCExpressionParameters.Parameter[] parameters = avatarDescriptor.expressionParameters.parameters;
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                currentMenuGraph.AvatarParamters.Add(MenuGraphParamter.ConvertToMenuGraphParamters(parameters[i]));
+            }
 
             graphView.PopulateGraph();
+            graphView.BuildBlackboard();
 
             string statsMessage =
                 $@"Scan Complete

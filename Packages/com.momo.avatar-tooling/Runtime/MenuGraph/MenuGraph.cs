@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 using VRC.SDK3.Avatars.Components;
 using VRC.SDK3.Avatars.ScriptableObjects;
 using VRC.SDKBase;
@@ -24,6 +25,12 @@ namespace MomoVRChatTools
         // All the connections inside the nodes between the menus
         [SerializeField] private List<MenuGraphConnection> connections = new List<MenuGraphConnection>();
         public List<MenuGraphConnection> Connections { get { return connections; } }
+
+        [SerializeField] public bool loadBlackBoard = false;
+        [SerializeField] public Rect blackBoardPosition;
+        [SerializeField] public bool LoadGraphView = false;
+        [SerializeField] public Vector3 graphViewPosition;
+        [SerializeField] public Vector3 graphViewScale;
 
         private void Reset()
         {
