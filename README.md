@@ -127,6 +127,4 @@ removed.**
 
 # License
 
-This project uses a **custom license**.
-
 See the `LICENSE` file in this repository for full details.
