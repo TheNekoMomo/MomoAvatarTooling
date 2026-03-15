@@ -111,24 +111,6 @@ Make sure the VRChat SDK is installed before importing the package.
 
 ------------------------------------------------------------------------
 
-# Installation
-
-### Git URL
-
-Open:
-
-    Window → Package Manager
-
-Then:
-
-    + → Add package from git URL
-
-Enter:
-
-    git+https://github.com/<repo>/com.momo.avatar-tooling.git
-
-------------------------------------------------------------------------
-
 # Roadmap
 
 Planned development focus:
