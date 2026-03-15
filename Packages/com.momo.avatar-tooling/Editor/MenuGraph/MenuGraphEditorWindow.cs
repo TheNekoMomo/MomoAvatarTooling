@@ -153,13 +153,13 @@ namespace MomoVRChatTools.Editor
             if (!depthRowCounts.ContainsKey(depth)) depthRowCounts[depth] = 0;
 
             float xSpacing = 250f;
-            float ySpacing = 120f;
+            float ySpacing = 220f;
 
             int row = depthRowCounts[depth];
             depthRowCounts[depth]++;
 
             Rect position = new Rect(
-                new Vector2(depth * xSpacing, row * ySpacing * (menu.Count / 2f)),
+                new Vector2(depth * xSpacing, row * ySpacing),
                 MenuGraphView.NODE_SIZE
             );
 

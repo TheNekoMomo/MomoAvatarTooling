@@ -34,6 +34,9 @@ namespace MomoVRChatTools.Editor
             AddMiniMap();
             AddGraphManipulators();
 
+            //var blackBoard = new Blackboard();
+            //Add(blackBoard);
+
             PopulateGraph();
 
             nodeCreationRequest += UserRequestedNewMenuNode;
@@ -238,7 +241,7 @@ namespace MomoVRChatTools.Editor
         private AvatarMenuEditorNode GetEditorNode(string guid)
         {
             if (string.IsNullOrEmpty(guid)) return null;
-            AvatarMenuEditorNode node = graphNodes.First(editorNode => editorNode.AvatarMenuNode.GUID == guid);
+            AvatarMenuEditorNode node = graphNodes.FirstOrDefault(editorNode => editorNode.AvatarMenuNode.GUID == guid);
             return node;
         }
 
