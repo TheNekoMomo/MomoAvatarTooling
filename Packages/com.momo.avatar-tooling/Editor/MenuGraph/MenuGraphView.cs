@@ -103,36 +103,69 @@ namespace MomoVRChatTools.Editor
             blackBoard.scrollable = true;
 
             Add(blackBoard);
-            BuildBlackboard();
-        }
-        public void BuildBlackboard()
-        {
-            blackBoard.Clear();
-
-            foreach (MenuGraphParamter paramter in menuGraph.AvatarParamters)
-            {
-                AddParameterToBlackboard(paramter);
-            }
         }
 
         private void AddParameterToBlackboard(MenuGraphParamter paramter)
         {
+            // Create the BlackboardField
             BlackboardField field = new BlackboardField
             {
                 text = paramter.name,
                 typeText = paramter.valueType.ToString(),
                 userData = paramter
             };
-
+            // Create a new VisualElement to hold all of the data from the paramter
             VisualElement propertyView = new VisualElement();
-
+            // Create a VisualElement to hold just the Default Value
+            VisualElement ValueField = new VisualElement();
+            // Add the Field for the current Default Value Type Int | Float | Bool
+            AddValueField(paramter, ValueField);
+            // Create and add a a EnumField for a drop down to change the Default Value Type
             EnumField typeField = new EnumField(paramter.valueType);
-            typeField.RegisterValueChangedCallback(evt => 
+            typeField.RegisterValueChangedCallback(evt =>
             {
+                // When the ValueType changes update the paramter to save it
                 paramter.valueType = (VRCExpressionParameters.ValueType)evt.newValue;
+                // Update the BlackboardField value type text
+                field.typeText = paramter.valueType.ToString();
+                // update the blackBoard subTitle as its based on the ValueType
+                blackBoard.subTitle = blackBoard.subTitle = $"Total Parmater Cost: {menuGraph.AvatarParamters.CalculateTotalCostOfParamters()}";
+                // Clare and then add back the ValueField
+                ValueField.Clear();
+                AddValueField(paramter, ValueField);
             });
             propertyView.Add(typeField);
+            // Add the ValueField to the propertyView now so that it shows up after the ValueType drop down
+            propertyView.Add(ValueField);
+            // Create and add the toggles for if the value is Saved and or Network Synced
+            Toggle savedField = new Toggle("Saved")
+            {
+                value = paramter.saved
+            };
+            savedField.RegisterValueChangedCallback(evt =>
+            {
+                paramter.saved = evt.newValue;
+            });
+            propertyView.Add(savedField);
+            Toggle networkSyncedField = new Toggle("Network Synced")
+            {
+                value = paramter.networkSynced
+            };
+            networkSyncedField.RegisterValueChangedCallback(evt =>
+            {
+                paramter.networkSynced = evt.newValue;
+            });
+            propertyView.Add(networkSyncedField);
+            // Create the BlackboardRow that holds the field and propertyView
+            BlackboardRow row = new BlackboardRow(field, propertyView);
+            // Add the BlackboardRow to the blackBoard
+            blackBoard.Add(row);
+            // Set the blackBoard subTitle
+            blackBoard.subTitle = $"Total Parmater Cost: {menuGraph.AvatarParamters.CalculateTotalCostOfParamters()}";
+        }
 
+        private static void AddValueField(MenuGraphParamter paramter, VisualElement propertyView)
+        {
             switch (paramter.valueType)
             {
                 case VRCExpressionParameters.ValueType.Int:
@@ -172,30 +205,8 @@ namespace MomoVRChatTools.Editor
                     Debug.LogError("Paramter Added with unknown, Type: " + paramter.valueType);
                     break;
             }
-
-            Toggle savedField = new Toggle("Saved")
-            {
-                value = paramter.saved
-            };
-            savedField.RegisterValueChangedCallback(evt =>
-            {
-                paramter.saved = evt.newValue;
-            });
-            propertyView.Add(savedField);
-
-            Toggle networkSyncedField = new Toggle("Network Synced")
-            {
-                value = paramter.networkSynced
-            };
-            networkSyncedField.RegisterValueChangedCallback(evt =>
-            {
-                paramter.networkSynced = evt.newValue;
-            });
-            propertyView.Add(networkSyncedField);
-
-            BlackboardRow row = new BlackboardRow(field, propertyView);
-            blackBoard.Add(row);
         }
+
         private void OnBlackboardEdit(Blackboard blackboard, VisualElement element, string newValue)
         {
             if(element is BlackboardField field && field.userData is MenuGraphParamter paramter)
@@ -324,6 +335,11 @@ namespace MomoVRChatTools.Editor
                 AddNodeToGraph(avatarMenu);
             }
 
+            foreach (MenuGraphParamter paramter in menuGraph.AvatarParamters)
+            {
+                AddParameterToBlackboard(paramter);
+            }
+
             DrawConnections();
         }
         public void ClearGraph()
@@ -332,6 +348,8 @@ namespace MomoVRChatTools.Editor
 
             List<GraphElement> elementsToRemove = graphElements.ToList();
             DeleteElements(elementsToRemove);
+
+            blackBoard.Clear();
 
             graphNodes.Clear();
             editorConnectionDictionary.Clear();

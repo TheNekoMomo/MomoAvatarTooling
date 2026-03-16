@@ -11,6 +11,9 @@ namespace MomoVRChatTools
     [RequireComponent(typeof(VRCAvatarDescriptor)), AddComponentMenu("MomoVRChatTools/MenuGraph")]
     public class MenuGraph : MonoBehaviour, IEditorOnly
     {
+        [SerializeField] private string guid = "";
+        public string GUID {  get { return guid; } }
+
         // The avatars Descriptor
         private VRCAvatarDescriptor avatarDescriptor;
 
@@ -32,12 +35,19 @@ namespace MomoVRChatTools
         [SerializeField] public Vector3 graphViewPosition;
         [SerializeField] public Vector3 graphViewScale;
 
+        public Action OnMenuGraphReset = null;
+
         private void Reset()
         {
             //avatarParameters = new List<VRCExpressionParameters.Parameter>();
             avatarMenus = new List<AvatarMenuNode>();
             connections = new List<MenuGraphConnection>();
+
+            guid = Guid.NewGuid().ToString();
+
+            OnMenuGraphReset?.Invoke();
         }
+
         public VRCAvatarDescriptor GetAvatarDescriptor()
         {
             if (avatarDescriptor != null) return avatarDescriptor;
@@ -57,5 +67,5 @@ namespace MomoVRChatTools
             avatarMenus.Add(menu);
             return menu;
         }
-     }
+    }
 }

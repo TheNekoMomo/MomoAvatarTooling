@@ -13,7 +13,8 @@ namespace MomoVRChatTools.Editor
         // The uxml template the window is build off
         [SerializeField] private VisualTreeAsset uxmlAsset;
 
-        [SerializeField] private MenuGraph currentMenuGraph;
+        [SerializeField] private string currentMenuGraphGUID;
+        private MenuGraph currentMenuGraph;
         private MenuGraphView graphView;
 
         private Dictionary<int, int> depthRowCounts = new();
@@ -43,9 +44,28 @@ namespace MomoVRChatTools.Editor
         }
         private void OnEnable()
         {
+            EditorApplication.quitting += SaveUserGraphView;
+
+            if (currentMenuGraph == null)
+            {
+                MenuGraph[] avatarsWithMenuGraph = FindObjectsOfType<MenuGraph>();
+                foreach (MenuGraph avatar in avatarsWithMenuGraph)
+                {
+                    if (avatar.GUID != currentMenuGraphGUID) continue;
+                    currentMenuGraph = avatar;
+                    currentMenuGraph.OnMenuGraphReset = MenuGraphReset;
+                    break;
+                }
+            }
+            
             DrawGUI();
         }
         private void OnDestroy()
+        {
+            currentMenuGraph.OnMenuGraphReset -= MenuGraphReset;
+            SaveUserGraphView();
+        }
+        private void SaveUserGraphView()
         {
             currentMenuGraph.LoadGraphView = true;
             currentMenuGraph.graphViewPosition = graphView.viewTransform.position;
@@ -57,6 +77,8 @@ namespace MomoVRChatTools.Editor
         private void load(MenuGraph target)
         {
             currentMenuGraph = target;
+            currentMenuGraphGUID = target.GUID;
+            currentMenuGraph.OnMenuGraphReset = MenuGraphReset;
 
             DrawGUI();
         }
@@ -94,6 +116,12 @@ namespace MomoVRChatTools.Editor
 
             graphView = new MenuGraphView(this, currentMenuGraph);
             GraphArea.Add(graphView);
+        }
+
+        private void MenuGraphReset()
+        {
+            currentMenuGraphGUID = currentMenuGraph.GUID;
+            graphView.ClearGraph();
         }
 
         // Toolbar Buttons
@@ -139,7 +167,6 @@ namespace MomoVRChatTools.Editor
             }
 
             graphView.PopulateGraph();
-            graphView.BuildBlackboard();
 
             string statsMessage =
                 $@"Scan Complete
