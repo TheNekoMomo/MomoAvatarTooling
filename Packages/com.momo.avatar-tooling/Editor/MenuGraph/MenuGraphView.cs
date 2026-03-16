@@ -102,7 +102,21 @@ namespace MomoVRChatTools.Editor
 
             blackBoard.scrollable = true;
 
+            blackBoard.RegisterCallback<ValidateCommandEvent>(OnDeleteKey);
+
             Add(blackBoard);
+        }
+
+        private void OnDeleteKey(ValidateCommandEvent evt)
+        {
+            if (evt.commandName != "SoftDelete") return;
+
+            BlackboardField blackboardField = selection.OfType<BlackboardField>().FirstOrDefault();
+            if (blackboardField.userData is not MenuGraphParamter paramter) return;
+            BlackboardRow blackboardRow = blackboardField.GetFirstAncestorOfType<BlackboardRow>();
+            if (blackboardRow == null) return;
+
+            RemoveParameter(paramter, blackboardRow);
         }
 
         private void AddParameterToBlackboard(MenuGraphParamter paramter)
@@ -158,12 +172,16 @@ namespace MomoVRChatTools.Editor
             propertyView.Add(networkSyncedField);
             // Create the BlackboardRow that holds the field and propertyView
             BlackboardRow row = new BlackboardRow(field, propertyView);
+            // Add a Contextual menu drop down when right clicking on the BlackboardRow to remove the Parameter
+            row.AddManipulator(new ContextualMenuManipulator(evt =>
+            {
+                evt.menu.AppendAction("Remove", action => RemoveParameter(paramter, row), DropdownMenuAction.AlwaysEnabled);
+            }));
             // Add the BlackboardRow to the blackBoard
             blackBoard.Add(row);
             // Set the blackBoard subTitle
             blackBoard.subTitle = $"Total Parmater Cost: {menuGraph.AvatarParamters.CalculateTotalCostOfParamters()}";
         }
-
         private static void AddValueField(MenuGraphParamter paramter, VisualElement propertyView)
         {
             switch (paramter.valueType)
@@ -205,6 +223,11 @@ namespace MomoVRChatTools.Editor
                     Debug.LogError("Paramter Added with unknown, Type: " + paramter.valueType);
                     break;
             }
+        }
+        private void RemoveParameter(MenuGraphParamter paramter, BlackboardRow row)
+        {
+            row.RemoveFromHierarchy();
+            menuGraph.AvatarParamters.Remove(paramter);
         }
 
         private void OnBlackboardEdit(Blackboard blackboard, VisualElement element, string newValue)
@@ -399,22 +422,22 @@ namespace MomoVRChatTools.Editor
         public override List<Port> GetCompatiblePorts(Port startPort, NodeAdapter nodeAdapter)
         {
             List<Port> allPorts = new List<Port>();
-            List<Port> ports = new List<Port>();
+            List<Port> compatiblePorts = new List<Port>();
 
             foreach (AvatarMenuEditorNode node in graphNodes)
             {
                 allPorts.AddRange(node.Ports);
             }
 
-            foreach (Port p in allPorts)
+            foreach (Port port in allPorts)
             {
-                if (p == startPort) continue;
-                if (p.node == startPort.node) continue;
-                if (p.direction == startPort.direction) continue;
-                if (p.portType == startPort.portType) ports.Add(p);
+                if (port == startPort) continue;
+                if (port.node == startPort.node) continue;
+                if (port.direction == startPort.direction) continue;
+                if (port.portType == startPort.portType) compatiblePorts.Add(port);
             }
 
-            return ports;
+            return compatiblePorts;
         }
     }
 }
