@@ -235,6 +235,7 @@ namespace MomoVRChatTools.Editor
             if(element is BlackboardField field && field.userData is MenuGraphParamter paramter)
             {
                 if (string.IsNullOrEmpty(newValue)) newValue = "New Paramter";
+                newValue = newValue.Trim();
                 paramter.name = newValue;
 
                 field.text = newValue;
@@ -414,7 +415,7 @@ namespace MomoVRChatTools.Editor
 
         private void AddNodeToGraph(AvatarMenuNode avatarMenu)
         {
-            AvatarMenuEditorNode node = new AvatarMenuEditorNode(avatarMenu);
+            AvatarMenuEditorNode node = new AvatarMenuEditorNode(avatarMenu, menuGraph);
             AddElement(node);
             graphNodes.Add(node);
         }

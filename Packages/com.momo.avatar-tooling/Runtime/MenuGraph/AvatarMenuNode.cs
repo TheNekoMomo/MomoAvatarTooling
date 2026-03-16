@@ -49,7 +49,7 @@ namespace MomoVRChatTools
                 menuGraphControl.name = control.name;
                 menuGraphControl.icon = control.icon;
                 menuGraphControl.type = control.type;
-                menuGraphControl.paramter = new MenuGraphParamter();
+                menuGraphControl.paramterName = control.parameter.name;
                 menuGraphControl.value = control.value;
                 menuGraphControl.subMenu = null;
 

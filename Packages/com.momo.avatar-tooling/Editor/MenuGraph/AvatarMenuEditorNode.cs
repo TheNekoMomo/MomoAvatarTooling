@@ -9,6 +9,7 @@ namespace MomoVRChatTools.Editor
 {
     public class AvatarMenuEditorNode : Node
     {
+        private MenuGraph menuGraph;
         // Catched AvatarMenuNode for later use
         private AvatarMenuNode avatarMenuNode;
         // List of all ports on this node
@@ -23,8 +24,9 @@ namespace MomoVRChatTools.Editor
         /// </summary>
         public List<Port> Ports { get { return ports; } }
 
-        public AvatarMenuEditorNode(AvatarMenuNode avatarMenuNode)
+        public AvatarMenuEditorNode(AvatarMenuNode avatarMenuNode, MenuGraph menuGraph)
         {
+            this.menuGraph = menuGraph;
             // Catch the avatarMenuNode so it can be used later on
             this.avatarMenuNode = avatarMenuNode;
 
@@ -60,34 +62,38 @@ namespace MomoVRChatTools.Editor
             ports.Add(inputPort);
 
             // Loop over all the controls so that can add a editable element for it
-            foreach (var control in avatarMenuNode.controls)
+            foreach (MenuGraphControl control in avatarMenuNode.controls)
             {
-                switch (control.type)
+                if(control.type == VRCExpressionsMenu.Control.ControlType.SubMenu)
                 {
-                    case VRCExpressionsMenu.Control.ControlType.Button:
-                        break;
-
-                    case VRCExpressionsMenu.Control.ControlType.Toggle:
-                        break;
-
-                    case VRCExpressionsMenu.Control.ControlType.SubMenu:
-                        Port subMenuPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(PortTypes.Menu));
-                        subMenuPort.portName = control.name;
-                        outputContainer.Add(subMenuPort);
-                        ports.Add(subMenuPort);
-                        break;
-
-                    case VRCExpressionsMenu.Control.ControlType.TwoAxisPuppet:
-                        break;
-
-                    case VRCExpressionsMenu.Control.ControlType.FourAxisPuppet:
-                        break;
-
-                    case VRCExpressionsMenu.Control.ControlType.RadialPuppet:
-                        break;
-
-                    default:
-                        break;
+                    Port subMenuPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(PortTypes.Menu));
+                    subMenuPort.portName = control.name;
+                    outputContainer.Add(subMenuPort);
+                    ports.Add(subMenuPort);
+                }
+                else
+                {
+                    MenuGraphParamter paramter = menuGraph.AvatarParamters.GetMenuGraphParamterByName(control.paramterName);
+                    if(paramter == null)
+                    {
+                        // TODO: Tell user about the error
+                        return;
+                    }
+                    switch (paramter.valueType)
+                    {
+                        case VRCExpressionParameters.ValueType.Int:
+                            AddIntField(control);
+                            break;
+                        case VRCExpressionParameters.ValueType.Float:
+                            AddFloatField(control);
+                            break;
+                        case VRCExpressionParameters.ValueType.Bool:
+                            AddBoolField(control);
+                            break;
+                        default:
+                            Debug.LogError($"Unknow paramter valueType: {paramter.valueType.ToString()} for {control.name}");
+                            break;
+                    }
                 }
             }
 
@@ -96,7 +102,7 @@ namespace MomoVRChatTools.Editor
             RefreshExpandedState();
         }
 
-        private void AddIntField(VRCExpressionsMenu.Control control)
+        private void AddIntField(MenuGraphControl control)
         {
             IntegerField valueField = new IntegerField(control.name);
             valueField.value = (int)control.value;
@@ -108,7 +114,7 @@ namespace MomoVRChatTools.Editor
             });
             extensionContainer.Add(valueField);
         }
-        private void AddFloatField(VRCExpressionsMenu.Control control)
+        private void AddFloatField(MenuGraphControl control)
         {
             FloatField valueField = new FloatField(control.name);
             valueField.value = control.value;
@@ -120,7 +126,7 @@ namespace MomoVRChatTools.Editor
             });
             extensionContainer.Add(valueField);
         }
-        private void AddBoolField(VRCExpressionsMenu.Control control)
+        private void AddBoolField(MenuGraphControl control)
         {
             Toggle valueField = new Toggle(control.name);
             valueField.value = control.value == 1;

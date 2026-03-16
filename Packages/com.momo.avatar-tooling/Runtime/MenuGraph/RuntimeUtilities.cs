@@ -46,5 +46,20 @@ namespace MomoVRChatTools
             failureReason = null;
             return true;
         }
+        public static MenuGraphParamter GetMenuGraphParamterByName(this List<MenuGraphParamter> avatarParamters, string ParamterName)
+        {
+            MenuGraphParamter menuGraphParamter = null;
+
+            for (int i = 0; i < avatarParamters.Count; i++)
+            {
+                if (avatarParamters[i].name == ParamterName)
+                {
+                    menuGraphParamter= avatarParamters[i];
+                    break;
+                }
+            }
+
+            return menuGraphParamter;
+        }
     }
 }
