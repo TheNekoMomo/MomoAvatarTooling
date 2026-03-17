@@ -1,9 +1,13 @@
+using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UIElements;
 using VRC.SDK3.Avatars.ScriptableObjects;
+using static VRC.SDK3.Avatars.ScriptableObjects.VRCExpressionsMenu;
 
 namespace MomoVRChatTools.Editor
 {
@@ -14,6 +18,8 @@ namespace MomoVRChatTools.Editor
         private AvatarMenuNode avatarMenuNode;
         // List of all ports on this node
         private List<Port> ports = new List<Port>();
+
+        private Dictionary<string, Port> MenucontrolPortLookup = new Dictionary<string, Port>();
 
         /// <summary>
         /// Returns the AvatarMenuNode this node represents
@@ -41,15 +47,6 @@ namespace MomoVRChatTools.Editor
             });
             titleContainer.Add(titleField);
 
-            var addButton = new Button(() =>
-            {
-                if (avatarMenuNode.controls.Count >= 8) return;
-                avatarMenuNode.controls.Add(new MenuGraphControl());
-            });
-            addButton.text = "Add";
-            addButton.tooltip = "Add a new field";
-            extensionContainer.Add(addButton);
-
             // Set the name of the visual element so it can be found based on the GUID
             name = avatarMenuNode.GUID;
             // Set the start position of the node
@@ -61,82 +58,215 @@ namespace MomoVRChatTools.Editor
             inputContainer.Add(inputPort);
             ports.Add(inputPort);
 
-            // Loop over all the controls so that can add a editable element for it
-            foreach (MenuGraphControl control in avatarMenuNode.controls)
+            UpdateNodeFields();
+        }
+
+        private void UpdateNodeFields()
+        {
+            extensionContainer.Clear();
+            outputContainer.Clear();
+            ports.RemoveAll(port => port.direction == Direction.Output);
+            MenucontrolPortLookup.Clear();
+
+            Button addButton = new Button(() =>
             {
-                if(control.type == VRCExpressionsMenu.Control.ControlType.SubMenu)
-                {
-                    Port subMenuPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(PortTypes.Menu));
-                    subMenuPort.portName = control.name;
-                    outputContainer.Add(subMenuPort);
-                    ports.Add(subMenuPort);
-                }
-                else
-                {
-                    MenuGraphParamter paramter = menuGraph.AvatarParamters.GetMenuGraphParamterByName(control.paramterName);
-                    if(paramter == null)
-                    {
-                        // TODO: Tell user about the error
-                        return;
-                    }
-                    switch (paramter.valueType)
-                    {
-                        case VRCExpressionParameters.ValueType.Int:
-                            AddIntField(control);
-                            break;
-                        case VRCExpressionParameters.ValueType.Float:
-                            AddFloatField(control);
-                            break;
-                        case VRCExpressionParameters.ValueType.Bool:
-                            AddBoolField(control);
-                            break;
-                        default:
-                            Debug.LogError($"Unknow paramter valueType: {paramter.valueType.ToString()} for {control.name}");
-                            break;
-                    }
-                }
+                if (avatarMenuNode.controls.Count >= 8) return;
+                avatarMenuNode.controls.Add(new MenuGraphControl());
+                UpdateNodeFields();
+            });
+            addButton.text = "Add";
+            addButton.tooltip = "Add a new field";
+            extensionContainer.Add(addButton);
+
+            for (int i = 0; i < avatarMenuNode.controls.Count; i++)
+            {
+                MenuGraphControl control = avatarMenuNode.controls[i];
+
+                VisualElement row = new VisualElement();
+                VisualElement nameRow = new VisualElement();
+                VisualElement dataRow = new VisualElement();
+
+                nameRow.style.flexDirection = FlexDirection.Row;
+                dataRow.style.flexDirection = FlexDirection.Row;
+
+                row.Add(nameRow);
+                row.Add(dataRow);
+
+                nameRow.Add(CreateNameField(control));
+                nameRow.Add(CreateRemoveButton(control));
+
+                CreateDataRow(control, dataRow);
+
+                extensionContainer.Add(row);
+                VisualElement space = new VisualElement();
+                space.style.height = 10;
+                extensionContainer.Add(space);
             }
 
-            // Update the Node (safety)
-            RefreshPorts();
             RefreshExpandedState();
         }
 
-        private void AddIntField(MenuGraphControl control)
+        private TextField CreateNameField(MenuGraphControl control)
         {
-            IntegerField valueField = new IntegerField(control.name);
-            valueField.value = (int)control.value;
-            valueField.AddToClassList("unity-base-field__aligned");
-
-            valueField.RegisterValueChangedCallback(evt =>
+            TextField controlName = new TextField();
+            controlName.value = control.name;
+            controlName.style.minWidth = 80;
+            controlName.style.flexGrow = 1;
+            controlName.RegisterValueChangedCallback(evt =>
             {
-                control.value = Mathf.Clamp(evt.newValue, 0, 255);
+                string newName = "New Control";
+                newName = string.IsNullOrEmpty(evt.newValue) ? newName : evt.newValue;
+                newName = newName.Trim();
+                control.name = newName;
+
+                if (control.type == Control.ControlType.SubMenu)
+                {
+                    Port submenuPort = MenucontrolPortLookup[control.GUID];
+                    if (submenuPort == null)
+                    {
+                        Debug.LogError($"Could not find port for {control.GUID} control in lookup table");
+                        return;
+                    }
+                    submenuPort.portName = newName;
+                }
             });
-            extensionContainer.Add(valueField);
+
+            return controlName;
         }
-        private void AddFloatField(MenuGraphControl control)
+        private Button CreateRemoveButton(MenuGraphControl control)
         {
-            FloatField valueField = new FloatField(control.name);
-            valueField.value = control.value;
-            valueField.AddToClassList("unity-base-field__aligned");
-
-            valueField.RegisterValueChangedCallback(evt =>
+            Button removeButton = new Button(() =>
             {
-                control.value = Mathf.Clamp(evt.newValue, -1, 1);
+                avatarMenuNode.controls.Remove(control);
+                UpdateNodeFields();
             });
-            extensionContainer.Add(valueField);
+            removeButton.text = "X";
+            removeButton.style.width = 22;
+
+            return removeButton;
         }
-        private void AddBoolField(MenuGraphControl control)
-        {
-            Toggle valueField = new Toggle(control.name);
-            valueField.value = control.value == 1;
-            valueField.AddToClassList("unity-base-field__aligned");
 
-            valueField.RegisterValueChangedCallback(evt =>
+        // Will need to rebuild when a new Parameter is Added.. may be best to move the dataRow to a catched value
+        private void CreateDataRow(MenuGraphControl control, VisualElement dataRow)
+        {
+            dataRow.Clear();
+
+            List<string> controlTypeStringList = Enum.GetNames(typeof(Control.ControlType)).ToList();
+            int controlTypeStringIndex = controlTypeStringList.IndexOf(control.type.ToString());
+
+            PopupField<string> controlTypePopupField = new PopupField<string>(controlTypeStringList, controlTypeStringIndex);
+            controlTypePopupField.style.width = 90;
+            controlTypePopupField.RegisterValueChangedCallback(evt =>
             {
-                control.value = evt.newValue ? 1 : 0;
+                if (!Enum.TryParse(evt.newValue, out Control.ControlType newControlType)) return;
+
+                if (control.type == Control.ControlType.SubMenu)
+                {
+                    // Submenu removed
+                    // need to remove the port off the lookup table
+                    // need to rebuild all the edges
+                    // need to remove all connections
+                    // maybe use Port.DisconnectAll();
+                    // still need to remove the connections from the menuGraph connections List
+                    // I can get the Port from the lookup table and from that get the index in ports for that Port
+                    // I know the node GUID
+                    // Remove all connections for that list based on if the GUID matches and the port index match.. if both do then remove that connection
+                }
+                else if (newControlType == Control.ControlType.SubMenu)
+                {
+                    // Submenu made
+                    // Already calling for the data row to be Created again.. so dont need to call for a port to be made
+                    // what needs to be done when a new submenu is made other then rebuilding the data row? nothing?
+                }
+                control.type = newControlType;
+                CreateDataRow(control, dataRow);
             });
-            extensionContainer.Add(valueField);
+
+            dataRow.Add(controlTypePopupField);
+
+            if (control.type == Control.ControlType.SubMenu)
+            {
+                Port subMenuPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(PortTypes.Menu));
+                subMenuPort.portName = control.name;
+                outputContainer.Add(subMenuPort);
+                ports.Add(subMenuPort);
+                MenucontrolPortLookup.Add(control.GUID, subMenuPort);
+
+                RefreshPorts();
+            }
+            else
+            {
+                VisualElement valueVisualElement = new VisualElement();
+
+                List<string> parameterNames = new List<string>();
+                foreach (MenuGraphParamter paramter in menuGraph.AvatarParamters)
+                {
+                    parameterNames.Add(paramter.name);
+                }
+
+                if (parameterNames.Count == 0) parameterNames.Add("[None]");
+
+                int selectedParameterIndex = parameterNames.IndexOf(control.paramterName);
+                PopupField<string> parameterField = new PopupField<string>(parameterNames, selectedParameterIndex);
+                parameterField.style.width = 100;
+                parameterField.RegisterValueChangedCallback(evt =>
+                {
+                    control.paramterName = evt.newValue;
+                    CreateValueField(control, valueVisualElement);
+                });
+                dataRow.Add(parameterField);
+
+                CreateValueField(control, valueVisualElement);
+
+                dataRow.Add(valueVisualElement);
+            }
+        }
+        private void CreateValueField(MenuGraphControl control, VisualElement valueVisualElement)
+        {
+            valueVisualElement.Clear();
+
+            MenuGraphParamter menuGraphParamter = menuGraph.AvatarParamters.GetMenuGraphParamterByName(control.paramterName);
+            if (menuGraphParamter != null)
+            {
+                switch (menuGraphParamter.valueType)
+                {
+                    case VRCExpressionParameters.ValueType.Int:
+                        IntegerField intField = new IntegerField();
+                        intField.value = (int)control.value;
+                        intField.style.width = 60;
+                        intField.RegisterValueChangedCallback(evt =>
+                        {
+                            control.value = Mathf.Clamp(evt.newValue, 0, 255);
+                        });
+                        valueVisualElement.Add(intField);
+                        break;
+
+                    case VRCExpressionParameters.ValueType.Float:
+                        FloatField floatField = new FloatField();
+                        floatField.value = control.value;
+                        floatField.style.width = 60;
+                        floatField.RegisterValueChangedCallback(evt =>
+                        {
+                            control.value = evt.newValue;
+                        });
+                        valueVisualElement.Add(floatField);
+                        break;
+
+                    case VRCExpressionParameters.ValueType.Bool:
+                        Toggle toggle = new Toggle();
+                        toggle.value = control.value >= 1;
+                        toggle.RegisterValueChangedCallback(evt =>
+                        {
+                            control.value = evt.newValue ? 1 : 0;
+                        });
+                        valueVisualElement.Add(toggle);
+                        break;
+
+                    default:
+                        Debug.LogError("Unknown Parameter ValueType");
+                        break;
+                }
+            }
         }
 
         // When the Node is selected in the graph trigger this event

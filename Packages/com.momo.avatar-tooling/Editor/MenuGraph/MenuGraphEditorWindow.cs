@@ -199,7 +199,7 @@ namespace MomoVRChatTools.Editor
             if (!depthRowCounts.ContainsKey(depth)) depthRowCounts[depth] = 0;
 
             float xSpacing = 250f;
-            float ySpacing = 220f;
+            float ySpacing = 500f;
 
             int row = depthRowCounts[depth];
             depthRowCounts[depth]++;
