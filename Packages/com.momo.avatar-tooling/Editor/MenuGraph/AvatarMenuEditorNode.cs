@@ -61,7 +61,7 @@ namespace MomoVRChatTools.Editor
             UpdateNodeFields();
         }
 
-        private void UpdateNodeFields()
+        public void UpdateNodeFields()
         {
             extensionContainer.Clear();
             outputContainer.Clear();
@@ -198,21 +198,31 @@ namespace MomoVRChatTools.Editor
             {
                 VisualElement valueVisualElement = new VisualElement();
 
-                List<string> parameterNames = new List<string>();
-                foreach (MenuGraphParamter paramter in menuGraph.AvatarParamters)
-                {
-                    parameterNames.Add(paramter.name);
-                }
-
-                if (parameterNames.Count == 0) parameterNames.Add("[None]");
-
+                List<string> parameterNames = GetParameterFieldOptions();
                 int selectedParameterIndex = parameterNames.IndexOf(control.paramterName);
+
                 PopupField<string> parameterField = new PopupField<string>(parameterNames, selectedParameterIndex);
                 parameterField.style.width = 100;
                 parameterField.RegisterValueChangedCallback(evt =>
                 {
                     control.paramterName = evt.newValue;
                     CreateValueField(control, valueVisualElement);
+                });
+                parameterField.RegisterCallback<MouseOverEvent>(evt =>
+                {
+                    List<string> parameterNames = GetParameterFieldOptions();
+                    parameterField.choices.Clear();
+                    parameterField.choices.AddRange(parameterNames);
+
+                    if (parameterNames.Contains(control.paramterName))
+                    {
+                        parameterField.value = control.paramterName;
+                    }
+                    else if (parameterNames.Count > 0)
+                    {
+                        parameterField.value = parameterNames[0];
+                        control.paramterName = parameterNames[0];
+                    }
                 });
                 dataRow.Add(parameterField);
 
@@ -267,6 +277,19 @@ namespace MomoVRChatTools.Editor
                         break;
                 }
             }
+        }
+
+        private List<string> GetParameterFieldOptions()
+        {
+            List<string> parameterNames = new List<string>();
+            foreach (MenuGraphParamter paramter in menuGraph.AvatarParamters)
+            {
+                parameterNames.Add(paramter.name);
+            }
+
+            if (parameterNames.Count == 0) parameterNames.Add("[None]");
+
+            return parameterNames;
         }
 
         // When the Node is selected in the graph trigger this event

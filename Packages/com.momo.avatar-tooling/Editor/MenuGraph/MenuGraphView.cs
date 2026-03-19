@@ -43,7 +43,7 @@ namespace MomoVRChatTools.Editor
             AddMiniMap();
 
             nodeCreationRequest += UserRequestedNewMenuNode;
-            graphViewChanged += OnGraphViewChanged;
+            graphViewChanged = OnGraphViewChanged;
         }
 
         private void AddBackground()
@@ -97,6 +97,8 @@ namespace MomoVRChatTools.Editor
                 MenuGraphParamter paramter = new MenuGraphParamter();
                 menuGraph.AvatarParamters.Add(paramter);
                 AddParameterToBlackboard(paramter);
+
+                UpdateAllNodesDataRow();
             };
             blackBoard.editTextRequested += OnBlackboardEdit;
 
@@ -147,6 +149,7 @@ namespace MomoVRChatTools.Editor
                 // Clare and then add back the ValueField
                 ValueField.Clear();
                 AddValueField(paramter, ValueField);
+                UpdateAllNodesDataRow();
             });
             propertyView.Add(typeField);
             // Add the ValueField to the propertyView now so that it shows up after the ValueType drop down
@@ -228,6 +231,18 @@ namespace MomoVRChatTools.Editor
         {
             row.RemoveFromHierarchy();
             menuGraph.AvatarParamters.Remove(paramter);
+
+            UpdateAllNodesDataRow();
+        }
+
+        private void UpdateAllNodesDataRow()
+        {
+            foreach (AvatarMenuEditorNode node in graphNodes)
+            {
+                node.UpdateNodeFields();
+            }
+
+            RedrawConnections();
         }
 
         private void OnBlackboardEdit(Blackboard blackboard, VisualElement element, string newValue)
@@ -294,7 +309,7 @@ namespace MomoVRChatTools.Editor
         private void RemovedNode(GraphViewChange graphViewChange)
         {
             List<AvatarMenuEditorNode> nodes = graphViewChange.elementsToRemove.OfType<AvatarMenuEditorNode>().ToList();
-            if(nodes.Count != 0)
+            if (nodes.Count != 0)
             {
                 Undo.RecordObject(menuGraph, "Removed menu nodes");
 
@@ -312,7 +327,8 @@ namespace MomoVRChatTools.Editor
         private void RemoveConnection(GraphViewChange graphViewChange)
         {
             List<Edge> edgesToRemove = graphViewChange.elementsToRemove.OfType<Edge>().ToList();
-            if(edgesToRemove.Count != 0)
+            Debug.Log($"Edges to remove {edgesToRemove.Count}");
+            if (edgesToRemove.Count != 0)
             {
                 Undo.RecordObject(menuGraph, "Removed Connection");
 
@@ -329,16 +345,19 @@ namespace MomoVRChatTools.Editor
         private void EdgeCreated(GraphViewChange graphViewChange)
         {
             Undo.RecordObject(menuGraph, "Added Connections");
-            foreach (Edge edge in graphViewChange.edgesToCreate)
+            Debug.Log($"EdgeCreated {graphViewChange.edgesToCreate.Count}");
+            for (int i = 0; i < graphViewChange.edgesToCreate.Count; i++)
             {
-                AvatarMenuEditorNode inputNode = (AvatarMenuEditorNode)edge.input.node;
-                int inputIndex = inputNode.Ports.IndexOf(edge.input);
+                AvatarMenuEditorNode inputNode = (AvatarMenuEditorNode)graphViewChange.edgesToCreate[i].input.node;
+                int inputIndex = inputNode.Ports.IndexOf(graphViewChange.edgesToCreate[i].input);
 
-                AvatarMenuEditorNode outputNode = (AvatarMenuEditorNode)edge.output.node;
-                int outputIndex = outputNode.Ports.IndexOf(edge.output);
+                AvatarMenuEditorNode outputNode = (AvatarMenuEditorNode)graphViewChange.edgesToCreate[i].output.node;
+                int outputIndex = outputNode.Ports.IndexOf(graphViewChange.edgesToCreate[i].output);
 
                 MenuGraphConnection connection = new MenuGraphConnection(inputNode.AvatarMenuNode.GUID, inputIndex, outputNode.AvatarMenuNode.GUID, outputIndex);
+
                 menuGraph.Connections.Add(connection);
+                editorConnectionDictionary.Add(graphViewChange.edgesToCreate[i], connection);
             }
         }
         private AvatarMenuNode GetAvatarMenuNodeFromGUID(string guid)
@@ -378,7 +397,24 @@ namespace MomoVRChatTools.Editor
             graphNodes.Clear();
             editorConnectionDictionary.Clear();
 
-            graphViewChanged += OnGraphViewChanged;
+            graphViewChanged = OnGraphViewChanged;
+        }
+        private void RedrawConnections()
+        {
+            graphViewChanged -= OnGraphViewChanged;
+
+            List<Edge> edges = new List<Edge>();
+            for (int i = editorConnectionDictionary.Count - 1; i >= 0; i--)
+            {
+                KeyValuePair<Edge, MenuGraphConnection> connection = editorConnectionDictionary.ElementAt(i);
+                edges.Add(connection.Key);
+                editorConnectionDictionary.Remove(connection.Key);
+            }
+            DeleteElements(edges);
+
+            DrawConnections();
+
+            graphViewChanged = OnGraphViewChanged;
         }
 
         private void DrawConnections()
@@ -432,6 +468,8 @@ namespace MomoVRChatTools.Editor
 
             foreach (Port port in allPorts)
             {
+                if (startPort.connections.Count() > 0) continue;
+                if (port.connections.Count() > 0) continue;
                 if (port == startPort) continue;
                 if (port.node == startPort.node) continue;
                 if (port.direction == startPort.direction) continue;
