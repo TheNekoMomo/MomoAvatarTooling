@@ -16,6 +16,8 @@ namespace MomoVRChatTools.Editor
         private MenuGraph menuGraph;
         // Catched AvatarMenuNode for later use
         private AvatarMenuNode avatarMenuNode;
+        // Chached GraphView
+        private MenuGraphView menuGraphView;
         // List of all ports on this node
         private List<Port> ports = new List<Port>();
 
@@ -30,11 +32,11 @@ namespace MomoVRChatTools.Editor
         /// </summary>
         public List<Port> Ports { get { return ports; } }
 
-        public AvatarMenuEditorNode(AvatarMenuNode avatarMenuNode, MenuGraph menuGraph)
+        public AvatarMenuEditorNode(AvatarMenuNode avatarMenuNode, MenuGraph menuGraph, MenuGraphView menuGraphView)
         {
             this.menuGraph = menuGraph;
-            // Catch the avatarMenuNode so it can be used later on
             this.avatarMenuNode = avatarMenuNode;
+            this.menuGraphView = menuGraphView;
 
             // Crate a editable title
             TextField titleField = new TextField()
@@ -45,6 +47,7 @@ namespace MomoVRChatTools.Editor
             {
                 avatarMenuNode.menuName = evt.newValue;
             });
+            titleField.tooltip = "Name of the menu object";
             titleContainer.Add(titleField);
 
             // Set the name of the visual element so it can be found based on the GUID
@@ -55,10 +58,13 @@ namespace MomoVRChatTools.Editor
             // Add a input port so that any menu can go to it
             Port inputPort = InstantiatePort(Orientation.Horizontal, Direction.Input, Port.Capacity.Single, typeof(PortTypes.Menu));
             inputPort.name = "Input";
+            inputPort.tooltip = "Input to this menu";
             inputContainer.Add(inputPort);
             ports.Add(inputPort);
 
             UpdateNodeFields();
+            this.menuGraphView = menuGraphView;
+
         }
 
         public void UpdateNodeFields()
@@ -109,6 +115,7 @@ namespace MomoVRChatTools.Editor
         private TextField CreateNameField(MenuGraphControl control)
         {
             TextField controlName = new TextField();
+            controlName.tooltip = "Name that shows in the menu wheel";
             controlName.value = control.name;
             controlName.style.minWidth = 80;
             controlName.style.flexGrow = 1;
@@ -140,6 +147,7 @@ namespace MomoVRChatTools.Editor
                 avatarMenuNode.controls.Remove(control);
                 UpdateNodeFields();
             });
+            removeButton.tooltip = "Remove the menu item";
             removeButton.text = "X";
             removeButton.style.width = 22;
 
@@ -155,31 +163,30 @@ namespace MomoVRChatTools.Editor
             int controlTypeStringIndex = controlTypeStringList.IndexOf(control.type.ToString());
 
             PopupField<string> controlTypePopupField = new PopupField<string>(controlTypeStringList, controlTypeStringIndex);
+            controlTypePopupField.tooltip = "The type of control used.";
             controlTypePopupField.style.width = 90;
             controlTypePopupField.RegisterValueChangedCallback(evt =>
             {
                 if (!Enum.TryParse(evt.newValue, out Control.ControlType newControlType)) return;
 
-                if (control.type == Control.ControlType.SubMenu)
+                if (control.type == Control.ControlType.SubMenu && newControlType != Control.ControlType.SubMenu)
                 {
-                    // Submenu removed
-                    // need to remove the port off the lookup table
-                    // need to rebuild all the edges
-                    // need to remove all connections
-                    // maybe use Port.DisconnectAll();
-                    // still need to remove the connections from the menuGraph connections List
-                    // I can get the Port from the lookup table and from that get the index in ports for that Port
-                    // I know the node GUID
-                    // Remove all connections for that list based on if the GUID matches and the port index match.. if both do then remove that connection
+                    Port portToRemove = MenucontrolPortLookup[control.GUID];
+                    MenucontrolPortLookup.Remove(control.GUID);
+
+                    IEnumerable<Edge> portEdgesToRemove = portToRemove.connections;
+                    for (int i = portEdgesToRemove.Count() - 1; i >= 0; i--)
+                    {
+                        menuGraphView.RemoveEdge(portEdgesToRemove.ElementAt(i));
+                    }
+
+                    outputContainer.Remove(portToRemove);
+                    RefreshPorts();
                 }
-                else if (newControlType == Control.ControlType.SubMenu)
-                {
-                    // Submenu made
-                    // Already calling for the data row to be Created again.. so dont need to call for a port to be made
-                    // what needs to be done when a new submenu is made other then rebuilding the data row? nothing?
-                }
+
                 control.type = newControlType;
                 CreateDataRow(control, dataRow);
+
             });
 
             dataRow.Add(controlTypePopupField);
@@ -187,6 +194,7 @@ namespace MomoVRChatTools.Editor
             if (control.type == Control.ControlType.SubMenu)
             {
                 Port subMenuPort = InstantiatePort(Orientation.Horizontal, Direction.Output, Port.Capacity.Single, typeof(PortTypes.Menu));
+                subMenuPort.tooltip = "The sub-menu this control connects too";
                 subMenuPort.portName = control.name;
                 outputContainer.Add(subMenuPort);
                 ports.Add(subMenuPort);
@@ -202,6 +210,7 @@ namespace MomoVRChatTools.Editor
                 int selectedParameterIndex = parameterNames.IndexOf(control.paramterName);
 
                 PopupField<string> parameterField = new PopupField<string>(parameterNames, selectedParameterIndex);
+                parameterField.tooltip = "The Parameter effect but this control";
                 parameterField.style.width = 100;
                 parameterField.RegisterValueChangedCallback(evt =>
                 {
@@ -234,6 +243,7 @@ namespace MomoVRChatTools.Editor
         private void CreateValueField(MenuGraphControl control, VisualElement valueVisualElement)
         {
             valueVisualElement.Clear();
+            string toolTip = "The value the Parameter get set to";
 
             MenuGraphParamter menuGraphParamter = menuGraph.AvatarParamters.GetMenuGraphParamterByName(control.paramterName);
             if (menuGraphParamter != null)
@@ -242,6 +252,7 @@ namespace MomoVRChatTools.Editor
                 {
                     case VRCExpressionParameters.ValueType.Int:
                         IntegerField intField = new IntegerField();
+                        intField.tooltip = toolTip;
                         intField.value = (int)control.value;
                         intField.style.width = 60;
                         intField.RegisterValueChangedCallback(evt =>
@@ -253,6 +264,7 @@ namespace MomoVRChatTools.Editor
 
                     case VRCExpressionParameters.ValueType.Float:
                         FloatField floatField = new FloatField();
+                        floatField.tooltip = toolTip;
                         floatField.value = control.value;
                         floatField.style.width = 60;
                         floatField.RegisterValueChangedCallback(evt =>
@@ -264,6 +276,7 @@ namespace MomoVRChatTools.Editor
 
                     case VRCExpressionParameters.ValueType.Bool:
                         Toggle toggle = new Toggle();
+                        toggle.tooltip = toolTip;
                         toggle.value = control.value >= 1;
                         toggle.RegisterValueChangedCallback(evt =>
                         {
@@ -282,12 +295,11 @@ namespace MomoVRChatTools.Editor
         private List<string> GetParameterFieldOptions()
         {
             List<string> parameterNames = new List<string>();
+            parameterNames.Add("[None]");
             foreach (MenuGraphParamter paramter in menuGraph.AvatarParamters)
             {
                 parameterNames.Add(paramter.name);
             }
-
-            if (parameterNames.Count == 0) parameterNames.Add("[None]");
 
             return parameterNames;
         }

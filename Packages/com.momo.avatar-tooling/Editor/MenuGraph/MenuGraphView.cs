@@ -442,6 +442,37 @@ namespace MomoVRChatTools.Editor
                 editorConnectionDictionary.Add(edge, connection);
             }
         }
+        public void RemoveEdge(Edge edge)
+        {
+            graphViewChanged -= OnGraphViewChanged;
+
+            // Get the MenuGraphConnection data based on the edge
+            if (editorConnectionDictionary.TryGetValue(edge, out MenuGraphConnection connectionToRemove))
+            {
+                // Remove the MenuGraphConnection from both the Dictionary and List
+                menuGraph.Connections.Remove(connectionToRemove);
+                editorConnectionDictionary.Remove(edge);
+                // Loop over all the Connections in menuGraph and check if is the same node GUID for the output ports as the one to be removed
+                // Then Check if the index is less then the index of the port being removed, if it is lower it by one
+                for (int i = 0; i < menuGraph.Connections.Count; i++)
+                {
+                    if (menuGraph.Connections[i].outputPort.nodeGUID != connectionToRemove.outputPort.nodeGUID) continue;
+                    if (menuGraph.Connections[i].outputPort.portIndex < connectionToRemove.outputPort.portIndex) continue;
+
+                    menuGraph.Connections[i].outputPort.portIndex -= 1;
+                    if (menuGraph.Connections[i].outputPort.portIndex > 0)
+                    {
+                        menuGraph.Connections[i].outputPort.portIndex = 0;
+                    }
+                }
+            }
+            if (edge.input != null) edge.input.Disconnect(edge);
+            if (edge.output != null) edge.output.Disconnect(edge);
+
+            RemoveElement(edge);
+
+            graphViewChanged = OnGraphViewChanged;
+        }
         private AvatarMenuEditorNode GetEditorNode(string guid)
         {
             if (string.IsNullOrEmpty(guid)) return null;
@@ -451,7 +482,7 @@ namespace MomoVRChatTools.Editor
 
         private void AddNodeToGraph(AvatarMenuNode avatarMenu)
         {
-            AvatarMenuEditorNode node = new AvatarMenuEditorNode(avatarMenu, menuGraph);
+            AvatarMenuEditorNode node = new AvatarMenuEditorNode(avatarMenu, menuGraph, this);
             AddElement(node);
             graphNodes.Add(node);
         }

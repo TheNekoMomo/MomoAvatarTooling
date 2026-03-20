@@ -2,7 +2,7 @@
 namespace MomoVRChatTools
 {
     [System.Serializable]
-    public struct MenuGraphConnection
+    public class MenuGraphConnection
     {
         public MenuGraphConnectionPort inputPort;
         public MenuGraphConnectionPort outputPort;
