@@ -243,6 +243,7 @@ namespace MomoVRChatTools.Editor
         private void CreateValueField(MenuGraphControl control, VisualElement valueVisualElement)
         {
             valueVisualElement.Clear();
+            if (control.type == Control.ControlType.RadialPuppet) return;
             string toolTip = "The value the Parameter get set to";
 
             MenuGraphParamter menuGraphParamter = menuGraph.AvatarParamters.GetMenuGraphParamterByName(control.paramterName);

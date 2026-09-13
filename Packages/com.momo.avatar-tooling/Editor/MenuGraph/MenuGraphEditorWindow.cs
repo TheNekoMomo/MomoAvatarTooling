@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -16,6 +18,8 @@ namespace MomoVRChatTools.Editor
         [SerializeField] private string currentMenuGraphGUID;
         private MenuGraph currentMenuGraph;
         private MenuGraphView graphView;
+
+        private const string menuGraphSaveFolder = "MenuGraph";
 
         private Dictionary<int, int> depthRowCounts = new();
         private int NumberOfMenusScaned = 0;
@@ -46,6 +50,7 @@ namespace MomoVRChatTools.Editor
         {
             EditorApplication.quitting += SaveUserGraphView;
 
+            Debug.Log(currentMenuGraph);
             if (currentMenuGraph == null)
             {
                 MenuGraph[] avatarsWithMenuGraph = FindObjectsOfType<MenuGraph>();
@@ -184,7 +189,73 @@ namespace MomoVRChatTools.Editor
         }
         private void UpdateAvatar()
         {
+            if (currentMenuGraph == null)
+            {
+                EditorUtility.DisplayDialog("Menu Graph", "Something went wrong, could not find the Menu Graph component.", "Ok");
+                return;
+            }
+            VRCAvatarDescriptor avatarDescriptor = currentMenuGraph.GetAvatarDescriptor();
+            if (avatarDescriptor == null)
+            {
+                EditorUtility.DisplayDialog("Menu Graph", "Something went wrong, could not find the Avatar Descriptor.", "Ok");
+                return;
+            }
+            if (currentMenuGraph.AvatarMenus.Count == 0)
+            {
+                EditorUtility.DisplayDialog("Menu Graph", "No menus setup in Menu Graph.", "Ok");
+                return;
+            }
+            if (avatarDescriptor.expressionsMenu != null)
+            {
+                bool process = EditorUtility.DisplayDialog("Menu Graph", "This avatar has expression menus setup do you wish to override them?.", "Ok", "Cancel");
+                if (!process) return;
+            }
             Debug.Log($"Updating {currentMenuGraph.name} Avatar..");
+
+            // Copy and Crate the AvatarParamters if set up in menuGraph
+            VRCExpressionParameters parameters = avatarDescriptor.expressionParameters;
+            if (currentMenuGraph.AvatarParamters.Count != 0)
+            {
+                // Copy over all the MenuGraphParamter values into a normal VRCExpressionParameters.Parameter
+                List<VRCExpressionParameters.Parameter> vRCParameters = new List<VRCExpressionParameters.Parameter>();
+                foreach (MenuGraphParamter menuGraphParamter in currentMenuGraph.AvatarParamters)
+                {
+                    VRCExpressionParameters.Parameter parameter = new VRCExpressionParameters.Parameter();
+                    parameter.name = menuGraphParamter.name;
+                    parameter.valueType = menuGraphParamter.valueType;
+                    parameter.saved = menuGraphParamter.saved;
+                    parameter.defaultValue = menuGraphParamter.defaultValue;
+                    parameter.networkSynced = menuGraphParamter.networkSynced;
+
+                    vRCParameters.Add(parameter);
+                }
+
+                if (parameters == null)
+                {
+                    VRCExpressionParameters vRCExpressionParametersSO = ScriptableObject.CreateInstance<VRCExpressionParameters>();
+                    vRCExpressionParametersSO.parameters = vRCParameters.ToArray();
+
+                    AssetDatabase.CreateAsset(vRCExpressionParametersSO, $"{GetSaveFolder()}/{currentMenuGraph.name} Parameters.asset");
+                    avatarDescriptor.expressionParameters = vRCExpressionParametersSO;
+                    parameters = vRCExpressionParametersSO;
+                }
+                else
+                {
+                    // Update VRCExpressionParameters scriptableobject
+                    avatarDescriptor.expressionParameters.parameters = vRCParameters.ToArray();
+                }
+            }
+
+            VRCExpressionsMenu vRCExpressionsMenu = avatarDescriptor.expressionsMenu;
+
+            // Find avatar Root menu.. 
+            //Ideas Start with menu 0 and check if has a parent.. (Fails badly, scaning too when two nodes link to the same child EG Tops,Bottoms both go to a color)
+            //Ideas Add a new node called Start or Root, whos only job is to tell what is the first node. (Down sides have to maintin that node in the edior and rework a lot)... Best so far i think
+
+            // New function. so that it can call its self with a return of VRCExpressionsMenu.
+            // Go down the list of all controls in the AvatarMenu node.
+            // Check if this control is a sub-menu, if so Call this function and get its returned menu
+            // Copy over each other funtion (Simple Part)
         }
 
         private void SearchAvatarMenu(VRCExpressionsMenu expressionsMenu, AvatarMenuNode parentMenu = null, int parentMenuIndex = 0, int depth = 0)
@@ -219,7 +290,7 @@ namespace MomoVRChatTools.Editor
                 MenuGraphConnectionPort output = new MenuGraphConnectionPort(parentMenu.GUID, parentMenuIndex);
                 currentMenuGraph.Connections.Add(new MenuGraphConnection(input, output));
 
-                parentMenu.controls[0].subMenu = createdAvatarMenu;
+                parentMenu.controls[submenuPortIndex].subMenu = createdAvatarMenu;
             }
 
             // Check what this menu has in it
@@ -261,6 +332,19 @@ namespace MomoVRChatTools.Editor
                         break;
                 }
             }
+        }
+
+        private string GetSaveFolder()
+        {
+            // Make VRCExpressionParameters scriptableobject
+            // Check Folders Exit before making stuff
+            if (!AssetDatabase.IsValidFolder($"Assets/{menuGraphSaveFolder}")) 
+                AssetDatabase.CreateFolder("Assets", menuGraphSaveFolder);
+
+            if (!AssetDatabase.IsValidFolder($"Assets/{menuGraphSaveFolder}/{currentMenuGraph.name}"))
+                AssetDatabase.CreateFolder($"Assets/{menuGraphSaveFolder}", currentMenuGraph.name);
+
+            return $"Assets/{menuGraphSaveFolder}/{currentMenuGraph.name}";
         }
     }
 }

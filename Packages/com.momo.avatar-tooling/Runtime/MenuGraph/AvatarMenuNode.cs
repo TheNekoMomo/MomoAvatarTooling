@@ -49,9 +49,16 @@ namespace MomoVRChatTools
                 menuGraphControl.name = control.name;
                 menuGraphControl.icon = control.icon;
                 menuGraphControl.type = control.type;
-                menuGraphControl.paramterName = control.parameter.name;
-                menuGraphControl.value = control.value;
-                menuGraphControl.subMenu = null;
+                menuGraphControl.paramterName = control.parameter.name; // Only if a Toggle/Button
+                menuGraphControl.value = control.value; // Only needed for a Toggle/Button
+                menuGraphControl.subMenu = null; // Only needed for a submenu
+
+                if (control.subParameters.Length != 0 
+                    && menuGraphControl.type != VRCExpressionsMenu.Control.ControlType.Button 
+                    && menuGraphControl.type != VRCExpressionsMenu.Control.ControlType.Toggle)
+                {
+                    menuGraphControl.paramterName = control.subParameters[0].name;
+                }
 
                 controls.Add(menuGraphControl);
             }
